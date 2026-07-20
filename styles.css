@@ -195,9 +195,10 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
    whitespace instead of pinned to the bottom. */
 .summary-body {
   flex: 1; min-height: 0; display: flex; flex-direction: column;
-  justify-content: space-between; gap: 16px; padding: 20px 26px 26px;
+  gap: 16px; padding: 20px 26px 26px;
 }
-.summary-words { min-height: 0; overflow-y: auto; }
+.summary-words { flex: 1; min-height: 0; overflow-y: auto; }
+.summary-actions { display: flex; flex-direction: column; gap: 12px; }
 .summary-cta { margin: 0; padding: 16px; font-size: 16px; gap: 8px; }
 
 /* — dialog — */
