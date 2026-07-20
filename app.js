@@ -242,11 +242,21 @@
   // ---------- pointer path tracing ----------
   let pointerActive = false;
 
+  // Only count a tile when the pointer is near its centre, not anywhere inside
+  // it. A diagonal swipe grazes the edge of the orthogonal tile it passes; the
+  // centre check keeps that graze from being registered as an extra step.
+  const HIT_RADIUS_RATIO = 0.40;
+
   function tileFromPoint(x, y) {
     const el = document.elementFromPoint(x, y);
     if (!el) return null;
     const tile = el.closest('.tile');
     if (!tile || !boardEl.contains(tile)) return null;
+    const r = tile.getBoundingClientRect();
+    const dx = x - (r.left + r.width / 2);
+    const dy = y - (r.top + r.height / 2);
+    const radius = r.width * HIT_RADIUS_RATIO;
+    if (dx * dx + dy * dy > radius * radius) return null;
     return Number(tile.dataset.idx);
   }
 
