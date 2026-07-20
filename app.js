@@ -2,11 +2,13 @@
   'use strict';
 
   // ---------- constants ----------
-  const GAME_SECONDS = 180;
+  const GAME_SECONDS = 60;
   const SEED_MAX = 36 ** 6; // keeps every game code exactly 6 base-36 chars
-  const BEST_SCORE_KEY = 'boggle:best-score';
+  const BEST_SCORE_KEY = 'lexigo:best-score';
+  const MIN_VOWELS = 4; // guaranteed vowels per board (Qu counts as one)
+  const MAX_VOWELS = 8; // avoid vowel-flooded, low-scoring boards too
 
-  // Classic 4x4 Boggle dice (16 six-sided dice). Die 10 carries a "Qu" face.
+  // Classic 4x4 word-dice (16 six-sided dice). Die 10 carries a "Qu" face.
   const DICE = [
     ['A', 'A', 'E', 'E', 'G', 'N'],
     ['E', 'L', 'R', 'T', 'T', 'Y'],
@@ -53,14 +55,25 @@
     return seed;
   }
 
+  const isVowelTile = (t) => t === 'Qu' || 'AEIOU'.includes(t);
+
   function generateBoard(seed) {
+    // Deterministic: same seed always yields the same board, so a shared code
+    // reproduces it exactly. We keep drawing from the one seeded stream until a
+    // board lands in the playable vowel range, re-rolling in place.
     const rand = mulberry32(seed);
-    const order = DICE.map((_, i) => i);
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(rand() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
+    let board;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const order = DICE.map((_, i) => i);
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      board = order.map((dieIdx) => DICE[dieIdx][Math.floor(rand() * 6)]);
+      const vowels = board.filter(isVowelTile).length;
+      if (vowels >= MIN_VOWELS && vowels <= MAX_VOWELS) break;
     }
-    return order.map((dieIdx) => DICE[dieIdx][Math.floor(rand() * 6)]);
+    return board;
   }
 
   // ---------- board geometry ----------
@@ -74,13 +87,16 @@
   };
 
   function scoreForWord(word) {
+    // Escalating: each extra letter is worth progressively more, so long words
+    // are the exciting play in a 60-second round. 8+ keeps climbing +5/letter.
     const n = word.length;
     if (n < 3) return 0;
-    if (n <= 4) return 1;
-    if (n === 5) return 2;
-    if (n === 6) return 3;
-    if (n === 7) return 5;
-    return 11;
+    if (n === 3) return 1;
+    if (n === 4) return 2;
+    if (n === 5) return 4;
+    if (n === 6) return 7;
+    if (n === 7) return 11;
+    return 16 + (n - 8) * 5;
   }
 
   // ---------- dictionary ----------
@@ -104,7 +120,6 @@
   };
   const boardEl = $('board');
   const boardWrap = document.querySelector('.board-wrap');
-  const clockEl = $('clock');
   const toastEl = $('toast');
 
   function showScreen(name) {
@@ -118,14 +133,6 @@
     clearTimeout(showToast._t);
     showToast._t = setTimeout(() => toastEl.classList.remove('show'), ms);
   }
-
-  function tickClock() {
-    const now = new Date();
-    let h = now.getHours() % 12; if (h === 0) h = 12;
-    clockEl.textContent = `${h}:${String(now.getMinutes()).padStart(2, '0')}`;
-  }
-  tickClock();
-  setInterval(tickClock, 15000);
 
   // ---------- game state ----------
   let state = null;
@@ -318,7 +325,7 @@
   function updateTimerHud() {
     const el = $('hud-time');
     el.textContent = formatTime(state.timeLeft);
-    el.classList.toggle('warn', state.timeLeft <= 20);
+    el.classList.toggle('warn', state.timeLeft <= 10);
   }
 
   function startTimer() {
@@ -437,10 +444,10 @@
 
   $('btn-share').addEventListener('click', async () => {
     const url = shareUrl(state.code);
-    const text = `I scored ${state.score} points on Boggle (game ${state.code})! Play it:`;
+    const text = `I scored ${state.score} points on Lexigo (game ${state.code})! Play it:`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Boggle', text, url });
+        await navigator.share({ title: 'Lexigo', text, url });
       } catch (_) { /* user cancelled */ }
       return;
     }

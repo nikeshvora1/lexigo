@@ -3,131 +3,131 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Boggle</title>
+<title>Lexigo</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <div class="stage">
-  <div class="ph" id="phone">
-    <div class="ph-scr">
+  <div class="app">
 
-      <div class="ph-sb">
-        <span id="clock">9:41</span>
-        <span class="dots"><span></span><span></span><span></span><span class="bat"></span></span>
-      </div>
-
-      <!-- START SCREEN -->
-      <div class="ph-body screen" id="screen-start">
-        <div class="start-main">
-          <div>
-            <div class="lbl accent">3-minute word hunt</div>
-            <h1 class="title">BOG<br>GLE</h1>
-          </div>
-          <hr class="hr">
-          <p class="start-copy">Swipe across adjacent letters — sideways, up, down or diagonally — to build words. Longer words score more.</p>
-          <button class="btn btn-primary btn-block" id="btn-new-game" style="justify-content:center;padding:16px;font-size:16px">New game</button>
-          <div>
-            <div class="lbl" style="margin-bottom:8px">Play a shared game</div>
-            <div style="display:flex;gap:8px">
-              <input class="input" id="input-code" placeholder="Enter game code" maxlength="6" autocapitalize="characters" style="letter-spacing:.1em;font-family:var(--font-heading);font-weight:800;text-transform:uppercase">
-              <button class="btn btn-secondary" id="btn-go" style="padding-inline:18px">Go</button>
-            </div>
-            <div class="field-err" id="code-err"></div>
-          </div>
+    <!-- START SCREEN -->
+    <div class="screen" id="screen-start">
+      <div class="start-main">
+        <div>
+          <div class="lbl accent">60-second word hunt</div>
+          <h1 class="title">LEX<br>IGO</h1>
         </div>
-        <div class="start-foot">
-          <div style="display:flex;justify-content:space-between;font:800 12px var(--font-heading);letter-spacing:.04em">
-            <span>Best score</span><span class="accent-text" id="best-score">0</span>
+        <hr class="hr">
+        <p class="start-copy">Swipe across adjacent letters — sideways, up, down or diagonally — to build words of <b>3 letters or more</b>. The longer the word, the more it's worth.</p>
+        <div class="score-guide">
+          <span class="lbl">Scoring</span>
+          <div class="score-guide-row">
+            <span><b>3</b> 1</span><span><b>4</b> 2</span><span><b>5</b> 4</span><span><b>6</b> 7</span><span><b>7</b> 11</span><span><b>8+</b> 16</span>
           </div>
+          <div class="score-guide-cap">letters &middot; points</div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-new-game" style="justify-content:center;padding:16px;font-size:16px">New game</button>
+        <div>
+          <div class="lbl" style="margin-bottom:8px">Play a shared game</div>
+          <div style="display:flex;gap:8px">
+            <input class="input" id="input-code" placeholder="Enter game code" maxlength="6" autocapitalize="characters" style="letter-spacing:.1em;font-family:var(--font-heading);font-weight:800;text-transform:uppercase">
+            <button class="btn btn-secondary" id="btn-go" style="padding-inline:18px">Go</button>
+          </div>
+          <div class="field-err" id="code-err"></div>
         </div>
       </div>
-
-      <!-- PLAY SCREEN -->
-      <div class="ph-body screen hidden" id="screen-play">
-        <div class="play-header">
-          <span class="brand">BOGGLE</span>
-          <span class="tag tag-neutral mono" id="game-code-tag">GAME 000000</span>
-        </div>
-        <div class="play-hud">
-          <div class="hud-cell">
-            <div class="lbl">Time</div>
-            <div class="hud-num accent-text" id="hud-time">3:00</div>
-          </div>
-          <div class="hud-cell bordered">
-            <div class="lbl">Score</div>
-            <div class="hud-num" id="hud-score">000</div>
-          </div>
-        </div>
-
-        <div class="board-wrap">
-          <div class="bd" id="board"></div>
-        </div>
-
-        <div class="word-banner" id="word-banner">
-          <span class="wb-word" id="wb-word">&nbsp;</span>
-          <span class="wb-pts" id="wb-pts"></span>
-          <svg class="wb-check" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-
-        <div class="found-wrap">
-          <div class="lbl" id="found-count" style="margin-bottom:10px">Found · 0</div>
-          <div class="found-list" id="found-list"></div>
-        </div>
-
-        <div class="play-actions">
-          <button class="btn btn-secondary" id="btn-shuffle" style="flex:1;justify-content:center">Shuffle</button>
-          <button class="btn btn-secondary btn-icon" id="btn-pause" aria-label="Pause">
-            <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            <svg id="icon-play" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-          </button>
-        </div>
-
-        <div class="pause-overlay hidden" id="pause-overlay">
-          <div class="lbl accent" style="margin-bottom:10px">Paused</div>
-          <button class="btn btn-primary" id="btn-resume">Resume</button>
+      <div class="start-foot">
+        <div style="display:flex;justify-content:space-between;font:800 12px var(--font-heading);letter-spacing:.04em">
+          <span>Best score</span><span class="accent-text" id="best-score">0</span>
         </div>
       </div>
-
-      <!-- SUMMARY SCREEN -->
-      <div class="ph-body screen hidden" id="screen-summary">
-        <div class="summary-hero">
-          <div class="lbl" style="color:#fff;opacity:.85" id="summary-sub">Time's up · Game 000000</div>
-          <div class="summary-score-row">
-            <span class="summary-score" id="summary-score">0</span>
-            <span class="summary-points-lbl">points</span>
-          </div>
-        </div>
-        <div class="play-hud">
-          <div class="hud-cell">
-            <div class="lbl">Words</div>
-            <div style="font:800 24px var(--font-heading)" id="summary-words">0</div>
-          </div>
-          <div class="hud-cell bordered">
-            <div class="lbl">Best word</div>
-            <div style="font:800 24px var(--font-heading);color:var(--color-accent)" id="summary-best-word">—</div>
-          </div>
-        </div>
-        <div class="found-wrap" style="padding-top:14px">
-          <div class="lbl" style="margin-bottom:8px">Your words</div>
-          <div class="found-list" id="summary-list"></div>
-        </div>
-        <div class="summary-foot">
-          <div class="share-url" id="share-url-row">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            <span class="mono" id="share-url-text">boggle/g/000000</span>
-          </div>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-primary" id="btn-share" style="flex:1;justify-content:center;gap:8px">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
-              <span id="share-label">Share result</span>
-            </button>
-            <button class="btn btn-secondary" id="btn-replay" style="padding-inline:18px">Replay</button>
-          </div>
-        </div>
-      </div>
-
     </div>
+
+    <!-- PLAY SCREEN -->
+    <div class="screen hidden" id="screen-play">
+      <div class="play-header">
+        <span class="brand">LEXIGO</span>
+        <span class="tag tag-neutral mono" id="game-code-tag">GAME 000000</span>
+      </div>
+      <div class="play-hud">
+        <div class="hud-cell">
+          <div class="lbl">Time</div>
+          <div class="hud-num accent-text" id="hud-time">1:00</div>
+        </div>
+        <div class="hud-cell bordered">
+          <div class="lbl">Score</div>
+          <div class="hud-num" id="hud-score">000</div>
+        </div>
+      </div>
+
+      <div class="board-wrap">
+        <div class="bd" id="board"></div>
+      </div>
+
+      <div class="word-banner" id="word-banner">
+        <span class="wb-word" id="wb-word">&nbsp;</span>
+        <span class="wb-pts" id="wb-pts"></span>
+        <svg class="wb-check" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+
+      <div class="found-wrap">
+        <div class="lbl" id="found-count" style="margin-bottom:10px">Found · 0</div>
+        <div class="found-list" id="found-list"></div>
+      </div>
+
+      <div class="play-actions">
+        <button class="btn btn-secondary" id="btn-shuffle" style="flex:1;justify-content:center">Shuffle</button>
+        <button class="btn btn-secondary btn-icon" id="btn-pause" aria-label="Pause">
+          <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <svg id="icon-play" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        </button>
+      </div>
+
+      <div class="pause-overlay hidden" id="pause-overlay">
+        <div class="lbl accent" style="margin-bottom:10px">Paused</div>
+        <button class="btn btn-primary" id="btn-resume">Resume</button>
+      </div>
+    </div>
+
+    <!-- SUMMARY SCREEN -->
+    <div class="screen hidden" id="screen-summary">
+      <div class="summary-hero">
+        <div class="lbl" style="color:#fff;opacity:.85" id="summary-sub">Time's up · Game 000000</div>
+        <div class="summary-score-row">
+          <span class="summary-score" id="summary-score">0</span>
+          <span class="summary-points-lbl">points</span>
+        </div>
+      </div>
+      <div class="play-hud">
+        <div class="hud-cell">
+          <div class="lbl">Words</div>
+          <div style="font:800 24px var(--font-heading)" id="summary-words">0</div>
+        </div>
+        <div class="hud-cell bordered">
+          <div class="lbl">Best word</div>
+          <div style="font:800 24px var(--font-heading);color:var(--color-accent)" id="summary-best-word">—</div>
+        </div>
+      </div>
+      <div class="found-wrap" style="padding-top:14px">
+        <div class="lbl" style="margin-bottom:8px">Your words</div>
+        <div class="found-list" id="summary-list"></div>
+      </div>
+      <div class="summary-foot">
+        <div class="share-url" id="share-url-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span class="mono" id="share-url-text">lexigo/g/000000</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" id="btn-share" style="flex:1;justify-content:center;gap:8px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+            <span id="share-label">Share result</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-replay" style="padding-inline:18px">Replay</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
