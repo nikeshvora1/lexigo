@@ -329,21 +329,30 @@
 
   // ---------- timer ----------
   function formatTime(s) {
+    s = Math.max(0, s); // never render a negative clock
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
 
   function updateTimerHud() {
     const el = $('hud-time');
     el.textContent = formatTime(state.timeLeft);
-    el.classList.toggle('warn', state.timeLeft <= 10);
+    el.classList.toggle('warn', state.timeLeft <= 10 && state.timeLeft > 0);
   }
 
   function startTimer() {
     stopTimer();
     state.timerHandle = setInterval(() => {
       state.timeLeft -= 1;
+      if (state.timeLeft <= 0) {
+        // Stop the clock BEFORE ending the game: if endGame ever throws, the
+        // interval is already cleared so it can't run on into negative time.
+        state.timeLeft = 0;
+        stopTimer();
+        updateTimerHud();
+        endGame();
+        return;
+      }
       updateTimerHud();
-      if (state.timeLeft <= 0) endGame();
     }, 1000);
   }
   function stopTimer() {
@@ -367,6 +376,7 @@
   }
 
   function startGame(seed) {
+    if (state) stopTimer(); // clear a prior game's timer before we replace state
     state = newState(seed);
     history.replaceState(null, '', `?g=${state.code}`);
     $('game-code-tag').textContent = `GAME ${state.code}`;
@@ -375,9 +385,8 @@
     updateTimerHud();
     renderFoundList();
     banner.classList.remove('show');
-    setPaused(false);
+    setPaused(false); // also (re)starts the timer
     showScreen('play');
-    startTimer();
   }
 
   function endGame() {
