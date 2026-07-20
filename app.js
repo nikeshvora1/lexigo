@@ -400,7 +400,24 @@
   // ---------- start screen ----------
   $('best-score').textContent = String(bestScore());
 
-  $('btn-new-game').addEventListener('click', () => startGame(randomSeed()));
+  // A shared URL lands here (not straight in the game) so first-timers see the
+  // rules. pendingSeed holds the invited board until they press play.
+  let pendingSeed = null;
+
+  function enterInviteMode(seed) {
+    pendingSeed = seed;
+    const code = encodeSeed(seed);
+    $('invite-code').textContent = `GAME ${code}`;
+    $('invite').classList.remove('hidden');
+    $('btn-new-game').textContent = `Play game ${code}`;
+    $('btn-random-instead').classList.remove('hidden');
+    $('input-code').value = code;
+  }
+
+  $('btn-new-game').addEventListener('click', () => {
+    startGame(pendingSeed != null ? pendingSeed : randomSeed());
+  });
+  $('btn-random-instead').addEventListener('click', () => startGame(randomSeed()));
 
   const codeInput = $('input-code');
   codeInput.addEventListener('input', () => {
@@ -463,20 +480,19 @@
   async function boot() {
     $('btn-new-game').disabled = true;
     $('btn-new-game').textContent = 'Loading…';
-    await dictReady;
-    $('btn-new-game').disabled = false;
-    $('btn-new-game').textContent = 'New game';
 
     const params = new URLSearchParams(location.search);
-    const g = params.get('g');
-    if (g) {
-      const seed = decodeCode(g);
-      if (seed != null) {
-        startGame(seed);
-        return;
-      }
-    }
+    const shared = params.get('g') ? decodeCode(params.get('g')) : null;
+
     showScreen('start');
+
+    await dictReady;
+    $('btn-new-game').disabled = false;
+    if (shared != null) {
+      enterInviteMode(shared);
+    } else {
+      $('btn-new-game').textContent = 'New game';
+    }
   }
   boot();
 })();

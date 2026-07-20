@@ -15,8 +15,15 @@
     <div class="screen" id="screen-start">
       <div class="start-main">
         <div>
-          <div class="lbl accent">60-second word hunt</div>
+          <div class="lbl accent" id="start-kicker">60-second word hunt</div>
           <h1 class="title">LEX<br>IGO</h1>
+        </div>
+        <div class="invite hidden" id="invite">
+          <div class="invite-top">
+            <span class="lbl">You've been invited to</span>
+            <span class="tag tag-neutral mono" id="invite-code">GAME 000000</span>
+          </div>
+          <p class="invite-copy">A friend shared their exact board. Read the quick rules below, then hit play.</p>
         </div>
         <hr class="hr">
         <p class="start-copy">Swipe across adjacent letters — sideways, up, down or diagonally — to build words of <b>3 letters or more</b>. The longer the word, the more it's worth.</p>
@@ -34,7 +41,8 @@
           </table>
         </div>
         <button class="btn btn-primary btn-block" id="btn-new-game" style="justify-content:center;padding:16px;font-size:16px">New game</button>
-        <div>
+        <button class="btn btn-ghost invite-alt hidden" id="btn-random-instead" style="justify-content:center">Start a random game instead</button>
+        <div id="shared-game-block">
           <div class="lbl" style="margin-bottom:8px">Play a shared game</div>
           <div style="display:flex;gap:8px">
             <input class="input" id="input-code" placeholder="Enter game code" maxlength="6" autocapitalize="characters" style="letter-spacing:.1em;font-family:var(--font-heading);font-weight:800;text-transform:uppercase">
