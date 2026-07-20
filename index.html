@@ -123,22 +123,16 @@
           <div style="font:800 24px var(--font-heading);color:var(--color-accent)" id="summary-best-word">—</div>
         </div>
       </div>
-      <div class="found-wrap" style="padding-top:14px">
-        <div class="lbl" style="margin-bottom:8px">Your words</div>
-        <div class="found-list" id="summary-list"></div>
-      </div>
-      <div class="summary-foot">
-        <div class="share-url" id="share-url-row">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span class="mono" id="share-url-text">lexigo/g/000000</span>
+      <div class="summary-body">
+        <div class="summary-words">
+          <div class="lbl" style="margin-bottom:10px">Your words</div>
+          <div class="found-list" id="summary-list"></div>
         </div>
-        <div style="display:flex;gap:10px">
-          <button class="btn btn-primary" id="btn-share" style="flex:1;justify-content:center;gap:8px">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
-            <span id="share-label">Share result</span>
-          </button>
-          <button class="btn btn-secondary" id="btn-replay" style="padding-inline:18px">Replay</button>
-        </div>
+        <button class="btn btn-primary btn-block summary-cta" id="btn-share">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+          <span id="share-label">Share result</span>
+        </button>
+        <button class="btn btn-secondary btn-block summary-cta" id="btn-replay">Replay</button>
       </div>
     </div>
 

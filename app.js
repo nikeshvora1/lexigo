@@ -403,7 +403,6 @@
       list.appendChild(span);
     });
 
-    $('share-url-text').textContent = shareUrl(code).replace(/^https?:\/\//, '');
     showScreen('summary');
   }
 
