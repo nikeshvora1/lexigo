@@ -85,6 +85,30 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .field-err { min-height: 16px; font-size: 11px; color: var(--color-accent); margin-top: 6px; }
 .field-hint { font-size: 11px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 2px; }
 .cta-stack { display: flex; flex-direction: column; gap: 10px; }
+.cta-row { display: flex; gap: 10px; }
+.cta-row .btn { flex: 1; }
+
+/* bottom sheet (shared-game code entry) */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center;
+  background: color-mix(in srgb, var(--color-neutral-900) 55%, transparent);
+}
+.sheet {
+  width: 100%; max-width: 424px; display: flex; flex-direction: column; gap: 12px;
+  padding: 22px 24px calc(24px + env(safe-area-inset-bottom)); background: var(--color-bg);
+  box-shadow: var(--shadow-lg); animation: sheet-up .22s ease;
+}
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-title { font: 800 22px var(--font-heading); }
+.sheet-desc { margin: 0; font-size: 13px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+.code-boxes { display: flex; gap: 8px; }
+.code-box {
+  flex: 1; min-width: 0; aspect-ratio: 1 / 1; text-align: center;
+  font: 800 26px var(--font-heading); color: var(--color-text); caret-color: transparent;
+  background: var(--color-surface); border: 2px solid transparent; border-radius: 0;
+}
+.code-box:focus { outline: none; border-color: var(--color-accent); background: var(--color-bg); }
 
 /* daily-done card (once/day lock state) */
 .daily-done { display: flex; flex-direction: column; gap: 5px; padding: 16px; background: var(--color-accent-100); border-left: 3px solid var(--color-accent); }

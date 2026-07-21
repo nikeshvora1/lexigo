@@ -652,7 +652,6 @@
     $('invite-code').textContent = `GAME ${code}`;
     $('invite').classList.remove('hidden');
     $('btn-daily').textContent = `Play game ${code}`;
-    $('input-code').value = code;
   }
 
   $('btn-daily').addEventListener('click', () => {
@@ -661,20 +660,70 @@
   });
   $('btn-practice').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
-  const codeInput = $('input-code');
-  codeInput.addEventListener('input', () => {
-    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+  // ---------- shared-game sheet (segmented 6-digit code entry) ----------
+  const sharedSheet = $('shared-sheet');
+  const codeBoxes = Array.from(document.querySelectorAll('#code-boxes .code-box'));
+  const codeValue = () => codeBoxes.map((b) => b.value).join('');
+
+  function updatePlayShared() {
+    $('btn-play-shared').disabled = codeValue().length !== 6;
+  }
+  function openSharedSheet() {
+    codeBoxes.forEach((b) => { b.value = ''; });
     $('code-err').textContent = '';
+    updatePlayShared();
+    sharedSheet.classList.remove('hidden');
+    codeBoxes[0].focus();
+  }
+  function closeSharedSheet() {
+    sharedSheet.classList.add('hidden');
+  }
+
+  codeBoxes.forEach((box, i) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.replace(/\D/g, '').slice(-1); // keep last digit typed
+      $('code-err').textContent = '';
+      if (box.value && i < codeBoxes.length - 1) codeBoxes[i + 1].focus();
+      updatePlayShared();
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !box.value && i > 0) {
+        e.preventDefault();
+        codeBoxes[i - 1].value = '';
+        codeBoxes[i - 1].focus();
+        updatePlayShared();
+      } else if (e.key === 'ArrowLeft' && i > 0) {
+        e.preventDefault(); codeBoxes[i - 1].focus();
+      } else if (e.key === 'ArrowRight' && i < codeBoxes.length - 1) {
+        e.preventDefault(); codeBoxes[i + 1].focus();
+      } else if (e.key === 'Enter' && !$('btn-play-shared').disabled) {
+        $('btn-play-shared').click();
+      }
+    });
+    box.addEventListener('focus', () => box.select());
+    box.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6).split('');
+      let idx = i;
+      digits.forEach((d) => { if (idx <= codeBoxes.length - 1) codeBoxes[idx++].value = d; });
+      codeBoxes[Math.min(idx, codeBoxes.length - 1)].focus();
+      updatePlayShared();
+    });
   });
-  codeInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('btn-go').click();
+
+  $('btn-shared-open').addEventListener('click', openSharedSheet);
+  $('btn-sheet-close').addEventListener('click', closeSharedSheet);
+  sharedSheet.addEventListener('click', (e) => { if (e.target === sharedSheet) closeSharedSheet(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !sharedSheet.classList.contains('hidden')) closeSharedSheet();
   });
-  $('btn-go').addEventListener('click', () => {
-    const seed = decodeCode(codeInput.value);
+  $('btn-play-shared').addEventListener('click', () => {
+    const seed = decodeCode(codeValue());
     if (seed == null) {
-      $('code-err').textContent = 'Enter a 6-digit game number.';
+      $('code-err').textContent = 'Enter a valid 6-digit code.';
       return;
     }
+    closeSharedSheet();
     startGame(seed, 'shared');
   });
 
