@@ -84,17 +84,18 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
 .field-err { min-height: 16px; font-size: 11px; color: var(--color-accent); margin-top: 6px; }
 .field-hint { font-size: 11px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 2px; }
-.cta-stack { display: flex; flex-direction: column; gap: 10px; }
+/* CTA block sits toward the bottom, just above the footer divider. */
+.cta-stack { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 .cta-row { display: flex; gap: 10px; }
 .cta-row .btn { flex: 1; }
 
 /* bottom sheet (shared-game code entry) */
 .sheet-backdrop {
-  position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center;
+  position: absolute; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center;
   background: color-mix(in srgb, var(--color-neutral-900) 55%, transparent);
 }
 .sheet {
-  width: 100%; max-width: 424px; display: flex; flex-direction: column; gap: 12px;
+  width: 100%; display: flex; flex-direction: column; gap: 12px;
   padding: 22px 24px calc(24px + env(safe-area-inset-bottom)); background: var(--color-bg);
   box-shadow: var(--shadow-lg); animation: sheet-up .22s ease;
 }
@@ -147,7 +148,7 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 }
 
 /* — start screen — */
-.start-main { flex: 1; display: flex; flex-direction: column; justify-content: safe center; gap: 20px; padding: 24px 26px; overflow-y: auto; }
+.start-main { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 20px; padding: 24px 26px; overflow-y: auto; }
 .title { font-size: 60px; line-height: .9; }
 .start-copy { font-size: 14px; margin: 0; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
 .start-foot { padding: 20px 26px; border-top: 2px solid var(--color-divider); flex: none; }
@@ -196,7 +197,6 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 }
 .tile.active { background: var(--color-accent-600); color: #fff; transform: scale(1.06); }
 .tile.settled { transform: scale(1); }
-.tile.wide { font-size: 24px; }
 .trace { position: absolute; top: 0; left: 0; width: 320px; height: 320px; pointer-events: none; z-index: 3; }
 .board-wrap.paused .bd { pointer-events: none; }
 
@@ -242,7 +242,7 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 
 /* — dialog — */
 .dialog-backdrop {
-  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  position: absolute; inset: 0; z-index: 60; display: grid; place-items: center;
   padding: var(--space-4); background: color-mix(in srgb, var(--color-neutral-900) 55%, transparent);
 }
 .dialog {

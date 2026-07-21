@@ -13,7 +13,7 @@
 
   gtag('config', 'G-Y6S4PYHRHH');
 </script>
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 
@@ -152,45 +152,45 @@
       </div>
     </div>
 
+    <div class="dialog-backdrop hidden" id="shuffle-dialog">
+      <div class="dialog">
+        <div class="dialog-title">Start a new board?</div>
+        <div class="dialog-body">Shuffling deals a fresh board and resets your score, timer and found words. This game's progress will be lost.</div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" id="btn-shuffle-cancel">Cancel</button>
+          <button class="btn btn-primary" id="btn-shuffle-confirm">Shuffle</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop hidden" id="shared-sheet">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div class="sheet-title">Shared game</div>
+          <button class="btn btn-secondary btn-icon" id="btn-sheet-close" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <p class="sheet-desc">Enter a 6-digit code. The same code always builds the same board.</p>
+        <div class="lbl">Game code</div>
+        <div class="code-boxes" id="code-boxes">
+          <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 1">
+          <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 2">
+          <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 3">
+          <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 4">
+          <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 5">
+          <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 6">
+        </div>
+        <div class="field-err" id="code-err"></div>
+        <button class="btn btn-primary btn-block" id="btn-play-shared" style="justify-content:center;padding:16px;font-size:16px" disabled>Play this board</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <div class="toast hidden" id="toast"></div>
 
-<div class="dialog-backdrop hidden" id="shuffle-dialog">
-  <div class="dialog">
-    <div class="dialog-title">Start a new board?</div>
-    <div class="dialog-body">Shuffling deals a fresh board and resets your score, timer and found words. This game's progress will be lost.</div>
-    <div class="dialog-actions">
-      <button class="btn btn-secondary" id="btn-shuffle-cancel">Cancel</button>
-      <button class="btn btn-primary" id="btn-shuffle-confirm">Shuffle</button>
-    </div>
-  </div>
-</div>
-
-<div class="sheet-backdrop hidden" id="shared-sheet">
-  <div class="sheet">
-    <div class="sheet-head">
-      <div class="sheet-title">Shared game</div>
-      <button class="btn btn-secondary btn-icon" id="btn-sheet-close" aria-label="Close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <p class="sheet-desc">Enter the 6-digit code from a friend's link. The same code always builds the same board.</p>
-    <div class="lbl">Game code</div>
-    <div class="code-boxes" id="code-boxes">
-      <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 1">
-      <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 2">
-      <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 3">
-      <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 4">
-      <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 5">
-      <input class="code-box" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 6">
-    </div>
-    <div class="field-err" id="code-err"></div>
-    <button class="btn btn-primary btn-block" id="btn-play-shared" style="justify-content:center;padding:16px;font-size:16px" disabled>Play this board</button>
-  </div>
-</div>
-
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

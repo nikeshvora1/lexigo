@@ -5,12 +5,13 @@
   const GAME_SECONDS = 60;
   const SEED_MAX = 1000000; // 6-digit numeric codes: 000000–999999 (1,000,000 boards)
   const BEST_SCORE_KEY = 'lexigo:best-score';
-  const MIN_VOWELS = 4; // guaranteed vowels per board (Qu counts as one)
+  const MIN_VOWELS = 4; // guaranteed vowels per board
   const MAX_VOWELS = 8; // avoid vowel-flooded, low-scoring boards too
   // Daily puzzle #1 is 2026-07-21 in the player's LOCAL time (month is 0-indexed).
   const DAILY_EPOCH = new Date(2026, 6, 21);
 
-  // Classic 4x4 word-dice (16 six-sided dice). Die 10 carries a "Qu" face.
+  // 4x4 word-dice (16 six-sided dice). Single-letter faces only — the classic
+  // "Qu" face is replaced with R so no tile ever shows two letters.
   const DICE = [
     ['A', 'A', 'E', 'E', 'G', 'N'],
     ['E', 'L', 'R', 'T', 'T', 'Y'],
@@ -22,7 +23,7 @@
     ['E', 'I', 'O', 'S', 'S', 'T'],
     ['D', 'E', 'L', 'R', 'V', 'Y'],
     ['A', 'C', 'H', 'O', 'P', 'S'],
-    ['H', 'I', 'M', 'N', 'Qu', 'U'],
+    ['H', 'I', 'M', 'N', 'R', 'U'],
     ['E', 'E', 'I', 'N', 'S', 'U'],
     ['E', 'E', 'G', 'H', 'N', 'W'],
     ['A', 'F', 'F', 'K', 'P', 'S'],
@@ -143,7 +144,7 @@
     return `${h}:${m}:${sec}`;
   }
 
-  const isVowelTile = (t) => t === 'Qu' || 'AEIOU'.includes(t);
+  const isVowelTile = (t) => 'AEIOU'.includes(t);
 
   function generateBoard(seed) {
     // Deterministic: same seed always yields the same board, so a shared code
@@ -302,7 +303,7 @@
     boardEl.innerHTML = '';
     state.letters.forEach((letter, idx) => {
       const div = document.createElement('div');
-      div.className = 'tile' + (letter.length > 1 ? ' wide' : '');
+      div.className = 'tile';
       div.textContent = letter;
       div.dataset.idx = String(idx);
       boardEl.appendChild(div);
