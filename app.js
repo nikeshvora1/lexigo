@@ -669,12 +669,16 @@
   function updatePlayShared() {
     $('btn-play-shared').disabled = codeValue().length !== 6;
   }
+  // preventScroll keeps focusing a box from nudging the framed page behind the
+  // sheet (an overflow:hidden container can still be scroll-jumped by focus).
+  const focusBox = (el) => el.focus({ preventScroll: true });
+
   function openSharedSheet() {
     codeBoxes.forEach((b) => { b.value = ''; });
     $('code-err').textContent = '';
     updatePlayShared();
     sharedSheet.classList.remove('hidden');
-    codeBoxes[0].focus();
+    focusBox(codeBoxes[0]);
   }
   function closeSharedSheet() {
     sharedSheet.classList.add('hidden');
@@ -684,19 +688,19 @@
     box.addEventListener('input', () => {
       box.value = box.value.replace(/\D/g, '').slice(-1); // keep last digit typed
       $('code-err').textContent = '';
-      if (box.value && i < codeBoxes.length - 1) codeBoxes[i + 1].focus();
+      if (box.value && i < codeBoxes.length - 1) focusBox(codeBoxes[i + 1]);
       updatePlayShared();
     });
     box.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace' && !box.value && i > 0) {
         e.preventDefault();
         codeBoxes[i - 1].value = '';
-        codeBoxes[i - 1].focus();
+        focusBox(codeBoxes[i - 1]);
         updatePlayShared();
       } else if (e.key === 'ArrowLeft' && i > 0) {
-        e.preventDefault(); codeBoxes[i - 1].focus();
+        e.preventDefault(); focusBox(codeBoxes[i - 1]);
       } else if (e.key === 'ArrowRight' && i < codeBoxes.length - 1) {
-        e.preventDefault(); codeBoxes[i + 1].focus();
+        e.preventDefault(); focusBox(codeBoxes[i + 1]);
       } else if (e.key === 'Enter' && !$('btn-play-shared').disabled) {
         $('btn-play-shared').click();
       }
@@ -707,7 +711,7 @@
       const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6).split('');
       let idx = i;
       digits.forEach((d) => { if (idx <= codeBoxes.length - 1) codeBoxes[idx++].value = d; });
-      codeBoxes[Math.min(idx, codeBoxes.length - 1)].focus();
+      focusBox(codeBoxes[Math.min(idx, codeBoxes.length - 1)]);
       updatePlayShared();
     });
   });
