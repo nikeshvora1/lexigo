@@ -66,8 +66,20 @@
   }
 
   // ---------- daily puzzle (local date) ----------
+  const DAILY_KEY = 'lexigo:daily';
+
   function startOfLocalDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function dayKey(date = new Date()) {
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  }
+
+  function previousDayKey(date = new Date()) {
+    const d = startOfLocalDay(date);
+    d.setDate(d.getDate() - 1); // handles month/year/DST via the calendar API
+    return dayKey(d);
   }
 
   function dailyPuzzleNumber(date = new Date()) {
@@ -78,7 +90,7 @@
   // Deterministic seed from the local date, well-mixed so consecutive days are
   // unrelated boards. Everyone on the same local calendar day gets this board.
   function dailySeed(date = new Date()) {
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    const key = dayKey(date);
     let h = 1779033703 ^ key.length;
     for (let i = 0; i < key.length; i++) {
       h = Math.imul(h ^ key.charCodeAt(i), 3432918353);
@@ -88,6 +100,47 @@
     h = Math.imul(h ^ (h >>> 13), 3266489909);
     h ^= h >>> 16;
     return (h >>> 0) % SEED_MAX;
+  }
+
+  // Per-device daily record: { day, score, words, puzzle, streak }.
+  function loadDaily() {
+    try { return JSON.parse(localStorage.getItem(DAILY_KEY)) || null; } catch (_) { return null; }
+  }
+  function saveDaily(obj) {
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(obj)); } catch (_) { /* ignore */ }
+  }
+  function playedTodaysDaily() {
+    const d = loadDaily();
+    return !!(d && d.day === dayKey());
+  }
+  // Streak only counts if still alive — the last recorded day is today or
+  // yesterday. Otherwise a day was missed and the streak is broken.
+  function activeStreak() {
+    const d = loadDaily();
+    if (!d || !d.streak) return 0;
+    return d.day === dayKey() || d.day === previousDayKey() ? d.streak : 0;
+  }
+  // Record today's daily result once; keep the first attempt if replayed.
+  function recordDailyResult(score, words, puzzle) {
+    const today = dayKey();
+    const stored = loadDaily();
+    if (stored && stored.day === today) return; // already recorded today
+    const streak = stored && stored.day === previousDayKey() ? (stored.streak || 0) + 1 : 1;
+    saveDaily({ day: today, score, words, puzzle, streak });
+  }
+
+  function msToNextLocalMidnight() {
+    const now = new Date();
+    const midnight = startOfLocalDay(now);
+    midnight.setDate(midnight.getDate() + 1);
+    return midnight - now;
+  }
+  function formatCountdown(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = String(Math.floor(s / 3600)).padStart(2, '0');
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
   }
 
   const isVowelTile = (t) => t === 'Qu' || 'AEIOU'.includes(t);
@@ -491,6 +544,9 @@
   function endGame() {
     stopTimer();
     maybeSaveBestScore(state.score);
+    if (state.mode === 'daily') {
+      recordDailyResult(state.score, state.foundList.length, state.puzzleNumber);
+    }
     const { score, foundList, foundSet } = state;
     $('summary-sub').textContent = `Time's up · ${gameLabel()}`;
     $('summary-score').textContent = String(score);
@@ -535,18 +591,58 @@
   }
 
   // ---------- start screen ----------
-  // Only surface a best score once one exists — a "Best score 0" line is just
-  // noise for a first-time visitor.
-  $('best-score').textContent = String(bestScore());
-  $('start-foot').classList.toggle('hidden', bestScore() <= 0);
-
   // A shared URL lands here (not straight in the game) so first-timers see the
   // rules. pendingSeed holds the invited board until they press play.
   let pendingSeed = null;
+  let countdownHandle = null;
 
-  function refreshDailyButton() {
-    // Normal landing: the primary CTA is today's daily.
-    $('btn-daily').textContent = `Play Today's Lexigo #${dailyPuzzleNumber()}`;
+  function stopCountdown() {
+    if (countdownHandle) clearInterval(countdownHandle);
+    countdownHandle = null;
+  }
+  function startCountdown() {
+    stopCountdown();
+    const tick = () => {
+      const ms = msToNextLocalMidnight();
+      $('daily-countdown').textContent = formatCountdown(ms);
+      if (ms <= 0) renderDailyLanding(); // rolled into a new day → show the new puzzle
+    };
+    tick();
+    countdownHandle = setInterval(tick, 1000);
+  }
+
+  // The daily area is either "Play Today's Lexigo #N" or, once played today, a
+  // done card with your result + a countdown to the next puzzle (the once/day lock).
+  function renderDailyLanding() {
+    const puzzle = dailyPuzzleNumber();
+    const done = playedTodaysDaily();
+    $('btn-daily').classList.toggle('hidden', done);
+    $('daily-done').classList.toggle('hidden', !done);
+    // With the daily locked, promote Practice to the primary action.
+    $('btn-practice').classList.toggle('btn-primary', done);
+    $('btn-practice').classList.toggle('btn-secondary', !done);
+
+    if (done) {
+      const d = loadDaily();
+      $('daily-done-title').textContent = `Today's Lexigo #${puzzle} — done`;
+      $('daily-done-score').textContent =
+        `You scored ${d.score} · ${d.words} ${d.words === 1 ? 'word' : 'words'}`;
+      startCountdown();
+    } else {
+      $('btn-daily').textContent = `Play Today's Lexigo #${puzzle}`;
+      stopCountdown();
+    }
+    renderStreakFooter();
+  }
+
+  function renderStreakFooter() {
+    const streak = activeStreak();
+    const best = bestScore();
+    $('streak-val').textContent = String(streak);
+    $('best-score').textContent = String(best);
+    $('streak-stat').classList.toggle('hidden', streak <= 0);
+    $('best-stat').classList.toggle('hidden', best <= 0);
+    $('start-foot').classList.toggle('hidden', streak <= 0 && best <= 0);
   }
 
   function enterInviteMode(seed) {
@@ -645,10 +741,14 @@
 
     await dictReady;
     $('btn-daily').disabled = false;
-    if (shared != null) {
+    // A ?g= link that is today's daily board is treated as the daily itself (so a
+    // reload mid-daily, or opening someone's daily link, shows the daily framing),
+    // not an "invited" shared game.
+    if (shared != null && shared !== dailySeed()) {
       enterInviteMode(shared);
+      renderStreakFooter();
     } else {
-      refreshDailyButton();
+      renderDailyLanding();
     }
   }
   boot();

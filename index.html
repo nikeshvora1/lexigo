@@ -13,7 +13,7 @@
 
   gtag('config', 'G-Y6S4PYHRHH');
 </script>
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body>
 
@@ -51,6 +51,11 @@
         </div>
         <div class="cta-stack">
           <button class="btn btn-primary btn-block" id="btn-daily" style="justify-content:center;padding:16px;font-size:16px">Play Today's Lexigo</button>
+          <div class="daily-done hidden" id="daily-done">
+            <div class="dd-title" id="daily-done-title">Today's Lexigo — done</div>
+            <div class="dd-score" id="daily-done-score">You scored 0 · 0 words</div>
+            <div class="dd-next">Next puzzle in <b id="daily-countdown">00:00:00</b></div>
+          </div>
           <button class="btn btn-secondary btn-block" id="btn-practice" style="justify-content:center;padding:14px">Practice</button>
         </div>
         <div id="shared-game-block">
@@ -64,8 +69,9 @@
         </div>
       </div>
       <div class="start-foot hidden" id="start-foot">
-        <div style="display:flex;justify-content:space-between;font:800 12px var(--font-heading);letter-spacing:.04em">
-          <span>Best score</span><span class="accent-text" id="best-score">0</span>
+        <div class="foot-row">
+          <span id="streak-stat">🔥 <b id="streak-val">0</b>&nbsp;day streak</span>
+          <span id="best-stat">Best <b class="accent-text" id="best-score">0</b></span>
         </div>
       </div>
     </div>
@@ -168,6 +174,6 @@
   </div>
 </div>
 
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>
