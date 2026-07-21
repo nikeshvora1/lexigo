@@ -489,7 +489,10 @@
   }
 
   // ---------- start screen ----------
+  // Only surface a best score once one exists — a "Best score 0" line is just
+  // noise for a first-time visitor.
   $('best-score').textContent = String(bestScore());
+  $('start-foot').classList.toggle('hidden', bestScore() <= 0);
 
   // A shared URL lands here (not straight in the game) so first-timers see the
   // rules. pendingSeed holds the invited board until they press play.
