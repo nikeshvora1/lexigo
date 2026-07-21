@@ -550,9 +550,19 @@
   // ---------- summary screen actions ----------
   $('btn-replay').addEventListener('click', () => startGame(randomSeed()));
 
+  function shareMessage() {
+    const pts = state.score;
+    const words = state.foundList.length;
+    const ptLabel = pts === 1 ? 'point' : 'points';
+    const wordLabel = words === 1 ? 'word' : 'words';
+    return `🔤 Lexigo — ${pts} ${ptLabel} in 60 seconds\n`
+      + `📝 ${words} ${wordLabel} found\n\n`
+      + `Same board, same 60s — beat me 👇`;
+  }
+
   $('btn-share').addEventListener('click', async () => {
     const url = shareUrl(state.code);
-    const text = `I scored ${state.score} points on Lexigo (game ${state.code})! Play it:`;
+    const text = shareMessage();
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Lexigo', text, url });
@@ -560,10 +570,10 @@
       return;
     }
     try {
-      await navigator.clipboard.writeText(url);
-      showToast('Link copied to clipboard');
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      showToast('Result copied to clipboard');
     } catch (_) {
-      showToast('Could not copy link');
+      showToast('Could not copy result');
     }
   });
 
