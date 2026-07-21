@@ -3,10 +3,12 @@
 
   // ---------- constants ----------
   const GAME_SECONDS = 60;
-  const SEED_MAX = 36 ** 6; // keeps every game code exactly 6 base-36 chars
+  const SEED_MAX = 1000000; // 6-digit numeric codes: 000000–999999 (1,000,000 boards)
   const BEST_SCORE_KEY = 'lexigo:best-score';
   const MIN_VOWELS = 4; // guaranteed vowels per board (Qu counts as one)
   const MAX_VOWELS = 8; // avoid vowel-flooded, low-scoring boards too
+  // Daily puzzle #1 is 2026-07-21 in the player's LOCAL time (month is 0-indexed).
+  const DAILY_EPOCH = new Date(2026, 6, 21);
 
   // Classic 4x4 word-dice (16 six-sided dice). Die 10 carries a "Qu" face.
   const DICE = [
@@ -44,15 +46,48 @@
   }
 
   function encodeSeed(seed) {
-    return seed.toString(36).toUpperCase().padStart(6, '0');
+    return String(seed).padStart(6, '0'); // 6-digit numeric code
   }
 
   function decodeCode(code) {
     const c = (code || '').trim().toUpperCase();
-    if (!/^[0-9A-Z]{1,6}$/.test(c)) return null;
-    const seed = parseInt(c, 36);
-    if (!Number.isFinite(seed) || seed < 0 || seed >= SEED_MAX) return null;
-    return seed;
+    // New canonical form: a 6-digit number.
+    if (/^[0-9]{1,6}$/.test(c)) {
+      const seed = parseInt(c, 10);
+      return seed >= 0 && seed < SEED_MAX ? seed : null;
+    }
+    // Backward-compatible: old 6-char base-36 links (which contained letters)
+    // still resolve to the exact board they always did.
+    if (/^[0-9A-Z]{1,6}$/.test(c)) {
+      const seed = parseInt(c, 36);
+      return Number.isFinite(seed) && seed >= 0 ? seed : null;
+    }
+    return null;
+  }
+
+  // ---------- daily puzzle (local date) ----------
+  function startOfLocalDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function dailyPuzzleNumber(date = new Date()) {
+    const days = Math.round((startOfLocalDay(date) - DAILY_EPOCH) / 86400000);
+    return days + 1; // epoch day is #1
+  }
+
+  // Deterministic seed from the local date, well-mixed so consecutive days are
+  // unrelated boards. Everyone on the same local calendar day gets this board.
+  function dailySeed(date = new Date()) {
+    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    let h = 1779033703 ^ key.length;
+    for (let i = 0; i < key.length; i++) {
+      h = Math.imul(h ^ key.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) % SEED_MAX;
   }
 
   const isVowelTile = (t) => t === 'Qu' || 'AEIOU'.includes(t);
@@ -178,10 +213,12 @@
   // ---------- game state ----------
   let state = null;
 
-  function newState(seed) {
+  function newState(seed, mode) {
     return {
       seed,
       code: encodeSeed(seed),
+      mode, // 'daily' | 'practice' | 'shared'
+      puzzleNumber: mode === 'daily' ? dailyPuzzleNumber() : null,
       letters: generateBoard(seed),
       score: 0,
       foundSet: new Set(),
@@ -191,6 +228,13 @@
       paused: false,
       path: [],
     };
+  }
+
+  // How this game is labelled in the play header and summary sub-line.
+  function gameLabel() {
+    return state.mode === 'daily'
+      ? `Lexigo #${state.puzzleNumber}`
+      : `Game ${state.code}`;
   }
 
   function bestScore() {
@@ -416,11 +460,13 @@
     return `${location.origin}${location.pathname}?g=${code}`;
   }
 
-  function startGame(seed) {
+  function startGame(seed, mode = 'practice') {
     if (state) stopTimer(); // clear a prior game's timer before we replace state
-    state = newState(seed);
+    state = newState(seed, mode);
     history.replaceState(null, '', `?g=${state.code}`);
-    $('game-code-tag').textContent = `GAME ${state.code}`;
+    $('game-code-tag').textContent = state.mode === 'daily'
+      ? `TODAY'S LEXIGO #${state.puzzleNumber}`
+      : `GAME ${state.code}`;
     renderBoard();
     updateScoreHud();
     updateTimerHud();
@@ -445,8 +491,8 @@
   function endGame() {
     stopTimer();
     maybeSaveBestScore(state.score);
-    const { score, foundList, foundSet, code } = state;
-    $('summary-sub').textContent = `Time's up · Game ${code}`;
+    const { score, foundList, foundSet } = state;
+    $('summary-sub').textContent = `Time's up · ${gameLabel()}`;
     $('summary-score').textContent = String(score);
     $('summary-words').textContent = String(foundList.length);
     const best = foundList.reduce((a, b) => {
@@ -498,24 +544,30 @@
   // rules. pendingSeed holds the invited board until they press play.
   let pendingSeed = null;
 
+  function refreshDailyButton() {
+    // Normal landing: the primary CTA is today's daily.
+    $('btn-daily').textContent = `Play Today's Lexigo #${dailyPuzzleNumber()}`;
+  }
+
   function enterInviteMode(seed) {
+    // Arrived via a shared ?g= link: primary CTA becomes that board.
     pendingSeed = seed;
     const code = encodeSeed(seed);
     $('invite-code').textContent = `GAME ${code}`;
     $('invite').classList.remove('hidden');
-    $('btn-new-game').textContent = `Play game ${code}`;
-    $('btn-random-instead').classList.remove('hidden');
+    $('btn-daily').textContent = `Play game ${code}`;
     $('input-code').value = code;
   }
 
-  $('btn-new-game').addEventListener('click', () => {
-    startGame(pendingSeed != null ? pendingSeed : randomSeed());
+  $('btn-daily').addEventListener('click', () => {
+    if (pendingSeed != null) startGame(pendingSeed, 'shared');
+    else startGame(dailySeed(), 'daily');
   });
-  $('btn-random-instead').addEventListener('click', () => startGame(randomSeed()));
+  $('btn-practice').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
   const codeInput = $('input-code');
   codeInput.addEventListener('input', () => {
-    codeInput.value = codeInput.value.toUpperCase();
+    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
     $('code-err').textContent = '';
   });
   codeInput.addEventListener('keydown', (e) => {
@@ -524,10 +576,10 @@
   $('btn-go').addEventListener('click', () => {
     const seed = decodeCode(codeInput.value);
     if (seed == null) {
-      $('code-err').textContent = 'Enter a valid game code (letters and numbers).';
+      $('code-err').textContent = 'Enter a 6-digit game number.';
       return;
     }
-    startGame(seed);
+    startGame(seed, 'shared');
   });
 
   // ---------- play screen actions ----------
@@ -547,18 +599,19 @@
   });
   $('btn-shuffle-confirm').addEventListener('click', () => {
     shuffleDialog.classList.add('hidden');
-    startGame(randomSeed());
+    startGame(randomSeed(), 'practice');
   });
 
   // ---------- summary screen actions ----------
-  $('btn-replay').addEventListener('click', () => startGame(randomSeed()));
+  $('btn-replay').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
   function shareMessage() {
     const pts = state.score;
     const words = state.foundList.length;
     const ptLabel = pts === 1 ? 'point' : 'points';
     const wordLabel = words === 1 ? 'word' : 'words';
-    return `🔤 Lexigo — ${pts} ${ptLabel} in 60 seconds\n`
+    const title = state.mode === 'daily' ? `Lexigo #${state.puzzleNumber}` : 'Lexigo';
+    return `🔤 ${title} — ${pts} ${ptLabel} in 60 seconds\n`
       + `📝 ${words} ${wordLabel} found\n\n`
       + `Same board, same 60s — beat me 👇`;
   }
@@ -582,8 +635,8 @@
 
   // ---------- boot ----------
   async function boot() {
-    $('btn-new-game').disabled = true;
-    $('btn-new-game').textContent = 'Loading…';
+    $('btn-daily').disabled = true;
+    $('btn-daily').textContent = 'Loading…';
 
     const params = new URLSearchParams(location.search);
     const shared = params.get('g') ? decodeCode(params.get('g')) : null;
@@ -591,11 +644,11 @@
     showScreen('start');
 
     await dictReady;
-    $('btn-new-game').disabled = false;
+    $('btn-daily').disabled = false;
     if (shared != null) {
       enterInviteMode(shared);
     } else {
-      $('btn-new-game').textContent = 'New game';
+      refreshDailyButton();
     }
   }
   boot();

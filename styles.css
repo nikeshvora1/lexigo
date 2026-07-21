@@ -83,6 +83,8 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
 .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
 .field-err { min-height: 16px; font-size: 11px; color: var(--color-accent); margin-top: 6px; }
+.field-hint { font-size: 11px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 2px; }
+.cta-stack { display: flex; flex-direction: column; gap: 10px; }
 
 /* — tags — */
 .tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: .02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * .75); }
