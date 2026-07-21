@@ -99,6 +99,47 @@
     return 16 + (n - 8) * 5;
   }
 
+  // Every valid word traceable on the board. A plain DFS explodes, so we first
+  // shrink the dictionary to words using only the board's letters, build a set
+  // of their prefixes, and prune any DFS path that stops being a live prefix.
+  // On a 4x4 board this runs in a few milliseconds.
+  function findAllBoardWords(letters) {
+    if (!WORDS) return new Set();
+    const tiles = letters.map((l) => l.toLowerCase());
+    const allowed = new Set(tiles.join('').split(''));
+
+    const wordSet = new Set();
+    const prefixSet = new Set();
+    for (const w of WORDS) {
+      let ok = true;
+      for (let i = 0; i < w.length; i++) {
+        if (!allowed.has(w[i])) { ok = false; break; }
+      }
+      if (!ok) continue;
+      wordSet.add(w);
+      for (let i = 1; i <= w.length; i++) prefixSet.add(w.slice(0, i));
+    }
+
+    const results = new Set();
+    const visited = new Array(16).fill(false);
+    function dfs(idx, str) {
+      if (!prefixSet.has(str)) return; // dead prefix — stop
+      if (str.length >= 3 && wordSet.has(str)) results.add(str);
+      for (let n = 0; n < 16; n++) {
+        if (visited[n] || !isAdjacent(idx, n)) continue;
+        visited[n] = true;
+        dfs(n, str + tiles[n]);
+        visited[n] = false;
+      }
+    }
+    for (let i = 0; i < 16; i++) {
+      visited[i] = true;
+      dfs(i, tiles[i]);
+      visited[i] = false;
+    }
+    return results;
+  }
+
   // ---------- dictionary ----------
   let WORDS = null;
   const dictReady = fetch('words.txt')
@@ -389,10 +430,22 @@
     showScreen('play');
   }
 
+  function renderChips(container, items, extraClass) {
+    const frag = document.createDocumentFragment();
+    items.forEach(({ word, pts }) => {
+      const span = document.createElement('span');
+      span.className = extraClass ? `wtag ${extraClass}` : 'wtag';
+      span.innerHTML = `${word} <i>${pts}</i>`;
+      frag.appendChild(span);
+    });
+    container.innerHTML = '';
+    container.appendChild(frag);
+  }
+
   function endGame() {
     stopTimer();
     maybeSaveBestScore(state.score);
-    const { score, foundList, code } = state;
+    const { score, foundList, foundSet, code } = state;
     $('summary-sub').textContent = `Time's up · Game ${code}`;
     $('summary-score').textContent = String(score);
     $('summary-words').textContent = String(foundList.length);
@@ -403,16 +456,36 @@
     }, null);
     $('summary-best-word').textContent = best ? best.word : '—';
 
-    const list = $('summary-list');
-    list.innerHTML = '';
-    foundList.forEach(({ word, pts }) => {
-      const span = document.createElement('span');
-      span.className = 'wtag';
-      span.innerHTML = `${word} <i>${pts}</i>`;
-      list.appendChild(span);
-    });
-
+    renderChips($('summary-list'), foundList);
     showScreen('summary');
+
+    // Missed words: every valid board word the player didn't find, best first.
+    // Deferred a tick so the summary paints immediately, then fills in.
+    $('found-label').textContent = `Your words · ${foundList.length}`;
+    $('missed-label').textContent = 'Finding every word…';
+    $('missed-list').innerHTML = '';
+    const boardLetters = state.letters.slice();
+    setTimeout(() => {
+      const all = findAllBoardWords(boardLetters);
+      const missed = [];
+      all.forEach((w) => {
+        if (!foundSet.has(w)) missed.push({ word: w.toUpperCase(), pts: scoreForWord(w) });
+      });
+      missed.sort((a, b) => b.word.length - a.word.length || (a.word < b.word ? -1 : 1));
+      $('found-label').textContent = all.size
+        ? `Your words · ${foundList.length} of ${all.size}`
+        : `Your words · ${foundList.length}`;
+      if (!all.size) {
+        $('missed-label').classList.add('hidden');
+      } else if (missed.length === 0) {
+        $('missed-label').classList.remove('hidden');
+        $('missed-label').textContent = 'You found every word — perfect!';
+      } else {
+        $('missed-label').classList.remove('hidden');
+        $('missed-label').textContent = `Missed · ${missed.length}`;
+        renderChips($('missed-list'), missed, 'missed');
+      }
+    }, 0);
   }
 
   // ---------- start screen ----------

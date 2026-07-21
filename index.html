@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lexigo</title>
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 
@@ -125,8 +125,10 @@
       </div>
       <div class="summary-body">
         <div class="summary-words">
-          <div class="lbl" style="margin-bottom:10px">Your words</div>
+          <div class="lbl" id="found-label" style="margin-bottom:10px">Your words</div>
           <div class="found-list" id="summary-list"></div>
+          <div class="lbl" id="missed-label" style="margin:18px 0 10px">Missed</div>
+          <div class="found-list" id="missed-list"></div>
         </div>
         <div class="summary-actions">
           <button class="btn btn-primary btn-block summary-cta" id="btn-share">
@@ -154,6 +156,6 @@
   </div>
 </div>
 
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

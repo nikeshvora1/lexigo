@@ -92,6 +92,8 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .wtag { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; background: var(--color-surface); font: 800 13px var(--font-heading); letter-spacing: .02em; }
 .wtag i { font: 600 10px var(--font-heading); color: var(--color-accent); font-style: normal; }
 .wtag.dup { opacity: .45; text-decoration: line-through; }
+.wtag.missed { background: transparent; box-shadow: inset 0 0 0 1px var(--color-divider); color: color-mix(in srgb, var(--color-text) 60%, transparent); }
+.wtag.missed i { color: color-mix(in srgb, var(--color-accent) 65%, transparent); }
 
 /* — layout: centered app card — */
 .stage { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
