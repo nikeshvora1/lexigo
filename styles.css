@@ -84,7 +84,10 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
 .field-err { min-height: 16px; font-size: 11px; color: var(--color-accent); margin-top: 6px; }
 .field-hint { font-size: 11px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 2px; }
-/* CTA block sits toward the bottom, just above the footer divider. */
+/* Two auto margins (above the title block and above the CTA block) split the
+   free space, giving healthy breathing room up top AND a gap before the CTAs
+   which sit just above the footer divider. */
+.start-top { margin-top: auto; }
 .cta-stack { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 .cta-row { display: flex; gap: 10px; }
 .cta-row .btn { flex: 1; }

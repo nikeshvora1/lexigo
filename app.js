@@ -287,7 +287,7 @@
   // How this game is labelled in the play header and summary sub-line.
   function gameLabel() {
     return state.mode === 'daily'
-      ? `Lexigo #${state.puzzleNumber}`
+      ? "Today's Lexigo"
       : `Game ${state.code}`;
   }
 
@@ -519,7 +519,7 @@
     state = newState(seed, mode);
     history.replaceState(null, '', `?g=${state.code}`);
     $('game-code-tag').textContent = state.mode === 'daily'
-      ? `TODAY'S LEXIGO #${state.puzzleNumber}`
+      ? "TODAY'S LEXIGO"
       : `GAME ${state.code}`;
     renderBoard();
     updateScoreHud();
@@ -612,10 +612,9 @@
     countdownHandle = setInterval(tick, 1000);
   }
 
-  // The daily area is either "Play Today's Lexigo #N" or, once played today, a
-  // done card with your result + a countdown to the next puzzle (the once/day lock).
+  // The daily area is either "Play Today's Lexigo" or, once played today, a done
+  // card with your result + a countdown to the next puzzle (the once/day lock).
   function renderDailyLanding() {
-    const puzzle = dailyPuzzleNumber();
     const done = playedTodaysDaily();
     $('btn-daily').classList.toggle('hidden', done);
     $('daily-done').classList.toggle('hidden', !done);
@@ -625,12 +624,12 @@
 
     if (done) {
       const d = loadDaily();
-      $('daily-done-title').textContent = `Today's Lexigo #${puzzle} — done`;
+      $('daily-done-title').textContent = "Today's Lexigo — done";
       $('daily-done-score').textContent =
         `You scored ${d.score} · ${d.words} ${d.words === 1 ? 'word' : 'words'}`;
       startCountdown();
     } else {
-      $('btn-daily').textContent = `Play Today's Lexigo #${puzzle}`;
+      $('btn-daily').textContent = "Play Today's Lexigo";
       stopCountdown();
     }
     renderStreakFooter();
@@ -760,7 +759,7 @@
     const words = state.foundList.length;
     const ptLabel = pts === 1 ? 'point' : 'points';
     const wordLabel = words === 1 ? 'word' : 'words';
-    const title = state.mode === 'daily' ? `Lexigo #${state.puzzleNumber}` : 'Lexigo';
+    const title = state.mode === 'daily' ? "Today's Lexigo" : 'Lexigo';
     return `🔤 ${title} — ${pts} ${ptLabel} in 60 seconds\n`
       + `📝 ${words} ${wordLabel} found\n\n`
       + `Same board, same 60s — beat me 👇`;
