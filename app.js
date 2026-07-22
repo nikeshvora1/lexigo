@@ -660,6 +660,25 @@
   });
   $('btn-practice').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
+  // ---------- viewport tracking (keyboard-aware sheet positioning) ----------
+  // On mobile the on-screen keyboard shrinks the *visual* viewport without
+  // resizing .app, so anything pinned via `inset:0` (like the shared-game
+  // sheet) can end up hidden behind the keyboard. Mirror the live visual
+  // viewport into CSS vars so mobile styles can size against it instead.
+  function syncViewportVars() {
+    const vv = window.visualViewport;
+    const root = document.documentElement.style;
+    root.setProperty('--vvh', `${vv ? vv.height : window.innerHeight}px`);
+    root.setProperty('--vv-top', `${vv ? vv.offsetTop : 0}px`);
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncViewportVars);
+    window.visualViewport.addEventListener('scroll', syncViewportVars);
+  } else {
+    window.addEventListener('resize', syncViewportVars);
+  }
+  syncViewportVars();
+
   // ---------- shared-game sheet (segmented 6-digit code entry) ----------
   const sharedSheet = $('shared-sheet');
   const codeBoxes = Array.from(document.querySelectorAll('#code-boxes .code-box'));
