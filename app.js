@@ -7,6 +7,7 @@
   const BEST_SCORE_KEY = 'lexigo:best-score';
   const MIN_VOWELS = 4; // guaranteed vowels per board
   const MAX_VOWELS = 8; // avoid vowel-flooded, low-scoring boards too
+  const DAILY_MIN_WORDS = 100; // the daily board should feel full; practice/shared boards aren't held to this
   // Daily puzzle #1 is 2026-07-21 in the player's LOCAL time (month is 0-indexed).
   const DAILY_EPOCH = new Date(2026, 6, 21);
 
@@ -101,6 +102,18 @@
     h = Math.imul(h ^ (h >>> 13), 3266489909);
     h ^= h >>> 16;
     return (h >>> 0) % SEED_MAX;
+  }
+
+  // The daily's seed nudged forward, still deterministically, until it lands
+  // on a board with at least DAILY_MIN_WORDS findable words. Practice/shared
+  // boards skip this — they use the raw seed straight into generateBoard.
+  function dailyGameSeed(date = new Date()) {
+    let seed = dailySeed(date);
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (findAllBoardWords(generateBoard(seed)).size >= DAILY_MIN_WORDS) return seed;
+      seed = (seed + 1) % SEED_MAX;
+    }
+    return seed;
   }
 
   // Per-device daily record: { day, score, words, puzzle, streak }.
@@ -656,7 +669,7 @@
 
   $('btn-daily').addEventListener('click', () => {
     if (pendingSeed != null) startGame(pendingSeed, 'shared');
-    else startGame(dailySeed(), 'daily');
+    else startGame(dailyGameSeed(), 'daily');
   });
   $('btn-practice').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
@@ -816,7 +829,7 @@
     // A ?g= link that is today's daily board is treated as the daily itself (so a
     // reload mid-daily, or opening someone's daily link, shows the daily framing),
     // not an "invited" shared game.
-    if (shared != null && shared !== dailySeed()) {
+    if (shared != null && shared !== dailyGameSeed()) {
       enterInviteMode(shared);
       renderStreakFooter();
     } else {
