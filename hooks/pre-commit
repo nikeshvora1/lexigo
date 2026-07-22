@@ -1,0 +1,11 @@
+#!/bin/sh
+# Versioned pre-commit gate for Lexigo. Enabled via `git config core.hooksPath hooks`
+# (run once per clone — see setup.sh / README). Blocks the commit if the zero-dep
+# logic tests fail. No node_modules, no npm — just Node's built-in test runner.
+
+# Syntax-check the browser entry points too, so a typo that node --test wouldn't
+# import still gets caught before it ships.
+node --check core.js || exit 1
+node --input-type=module --check < app.js || exit 1
+
+node --test

@@ -1,120 +1,24 @@
+import {
+  GAME_SECONDS,
+  randomSeed, encodeSeed, decodeCode,
+  dayKey, dailyPuzzleNumber, dailyGameSeed,
+  msToNextLocalMidnight, formatCountdown,
+  generateBoard, tileCenter, isAdjacent,
+  scoreForWord, findAllBoardWords,
+  streakIfAlive, nextStreak,
+} from './core.js';
+
 (() => {
   'use strict';
 
-  // ---------- constants ----------
-  const GAME_SECONDS = 60;
-  const SEED_MAX = 1000000; // 6-digit numeric codes: 000000–999999 (1,000,000 boards)
+  // ---------- app-local constants ----------
+  // Pure game logic (dice, rng, seeds, scoring, board search) lives in core.js
+  // so it can be unit-tested with `node --test`. Only DOM/storage-bound state
+  // stays here. These two keys are localStorage-only, so they stay app-local.
   const BEST_SCORE_KEY = 'lexigo:best-score';
-  const MIN_VOWELS = 4; // guaranteed vowels per board
-  const MAX_VOWELS = 8; // avoid vowel-flooded, low-scoring boards too
-  const DAILY_MIN_WORDS = 100; // the daily board should feel full; practice/shared boards aren't held to this
-  // Daily puzzle #1 is 2026-07-21 in the player's LOCAL time (month is 0-indexed).
-  const DAILY_EPOCH = new Date(2026, 6, 21);
-
-  // 4x4 word-dice (16 six-sided dice). Single-letter faces only — the classic
-  // "Qu" face is replaced with R so no tile ever shows two letters.
-  const DICE = [
-    ['A', 'A', 'E', 'E', 'G', 'N'],
-    ['E', 'L', 'R', 'T', 'T', 'Y'],
-    ['A', 'O', 'O', 'T', 'T', 'W'],
-    ['A', 'B', 'B', 'J', 'O', 'O'],
-    ['E', 'H', 'R', 'T', 'V', 'W'],
-    ['C', 'I', 'M', 'O', 'T', 'U'],
-    ['D', 'I', 'S', 'T', 'T', 'Y'],
-    ['E', 'I', 'O', 'S', 'S', 'T'],
-    ['D', 'E', 'L', 'R', 'V', 'Y'],
-    ['A', 'C', 'H', 'O', 'P', 'S'],
-    ['H', 'I', 'M', 'N', 'R', 'U'],
-    ['E', 'E', 'I', 'N', 'S', 'U'],
-    ['E', 'E', 'G', 'H', 'N', 'W'],
-    ['A', 'F', 'F', 'K', 'P', 'S'],
-    ['H', 'L', 'N', 'N', 'R', 'Z'],
-    ['D', 'E', 'I', 'L', 'R', 'X'],
-  ];
-
-  // ---------- seeded rng ----------
-  function mulberry32(seed) {
-    let a = seed >>> 0;
-    return function () {
-      a = (a + 0x6d2b79f5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
-  function randomSeed() {
-    return Math.floor(Math.random() * SEED_MAX);
-  }
-
-  function encodeSeed(seed) {
-    return String(seed).padStart(6, '0'); // 6-digit numeric code
-  }
-
-  function decodeCode(code) {
-    const c = (code || '').trim().toUpperCase();
-    // New canonical form: a 6-digit number.
-    if (/^[0-9]{1,6}$/.test(c)) {
-      const seed = parseInt(c, 10);
-      return seed >= 0 && seed < SEED_MAX ? seed : null;
-    }
-    // Backward-compatible: old 6-char base-36 links (which contained letters)
-    // still resolve to the exact board they always did.
-    if (/^[0-9A-Z]{1,6}$/.test(c)) {
-      const seed = parseInt(c, 36);
-      return Number.isFinite(seed) && seed >= 0 ? seed : null;
-    }
-    return null;
-  }
 
   // ---------- daily puzzle (local date) ----------
   const DAILY_KEY = 'lexigo:daily';
-
-  function startOfLocalDay(date) {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  }
-
-  function dayKey(date = new Date()) {
-    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-  }
-
-  function previousDayKey(date = new Date()) {
-    const d = startOfLocalDay(date);
-    d.setDate(d.getDate() - 1); // handles month/year/DST via the calendar API
-    return dayKey(d);
-  }
-
-  function dailyPuzzleNumber(date = new Date()) {
-    const days = Math.round((startOfLocalDay(date) - DAILY_EPOCH) / 86400000);
-    return days + 1; // epoch day is #1
-  }
-
-  // Deterministic seed from the local date, well-mixed so consecutive days are
-  // unrelated boards. Everyone on the same local calendar day gets this board.
-  function dailySeed(date = new Date()) {
-    const key = dayKey(date);
-    let h = 1779033703 ^ key.length;
-    for (let i = 0; i < key.length; i++) {
-      h = Math.imul(h ^ key.charCodeAt(i), 3432918353);
-      h = (h << 13) | (h >>> 19);
-    }
-    h = Math.imul(h ^ (h >>> 16), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    h ^= h >>> 16;
-    return (h >>> 0) % SEED_MAX;
-  }
-
-  // The daily's seed nudged forward, still deterministically, until it lands
-  // on a board with at least DAILY_MIN_WORDS findable words. Practice/shared
-  // boards skip this — they use the raw seed straight into generateBoard.
-  function dailyGameSeed(date = new Date()) {
-    let seed = dailySeed(date);
-    for (let attempt = 0; attempt < 100; attempt++) {
-      if (findAllBoardWords(generateBoard(seed)).size >= DAILY_MIN_WORDS) return seed;
-      seed = (seed + 1) % SEED_MAX;
-    }
-    return seed;
-  }
 
   // Per-device daily record: { day, score, words, puzzle, streak }.
   function loadDaily() {
@@ -130,116 +34,14 @@
   // Streak only counts if still alive — the last recorded day is today or
   // yesterday. Otherwise a day was missed and the streak is broken.
   function activeStreak() {
-    const d = loadDaily();
-    if (!d || !d.streak) return 0;
-    return d.day === dayKey() || d.day === previousDayKey() ? d.streak : 0;
+    return streakIfAlive(loadDaily());
   }
   // Record today's daily result once; keep the first attempt if replayed.
   function recordDailyResult(score, words, puzzle) {
     const today = dayKey();
     const stored = loadDaily();
     if (stored && stored.day === today) return; // already recorded today
-    const streak = stored && stored.day === previousDayKey() ? (stored.streak || 0) + 1 : 1;
-    saveDaily({ day: today, score, words, puzzle, streak });
-  }
-
-  function msToNextLocalMidnight() {
-    const now = new Date();
-    const midnight = startOfLocalDay(now);
-    midnight.setDate(midnight.getDate() + 1);
-    return midnight - now;
-  }
-  function formatCountdown(ms) {
-    const s = Math.max(0, Math.floor(ms / 1000));
-    const h = String(Math.floor(s / 3600)).padStart(2, '0');
-    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-    const sec = String(s % 60).padStart(2, '0');
-    return `${h}:${m}:${sec}`;
-  }
-
-  const isVowelTile = (t) => 'AEIOU'.includes(t);
-
-  function generateBoard(seed) {
-    // Deterministic: same seed always yields the same board, so a shared code
-    // reproduces it exactly. We keep drawing from the one seeded stream until a
-    // board lands in the playable vowel range, re-rolling in place.
-    const rand = mulberry32(seed);
-    let board;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const order = DICE.map((_, i) => i);
-      for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(rand() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-      board = order.map((dieIdx) => DICE[dieIdx][Math.floor(rand() * 6)]);
-      const vowels = board.filter(isVowelTile).length;
-      if (vowels >= MIN_VOWELS && vowels <= MAX_VOWELS) break;
-    }
-    return board;
-  }
-
-  // ---------- board geometry ----------
-  const TILE = 74, GAP = 8, STEP = TILE + GAP;
-  const rowOf = (i) => Math.floor(i / 4);
-  const colOf = (i) => i % 4;
-  const tileCenter = (i) => ({ x: colOf(i) * STEP + TILE / 2, y: rowOf(i) * STEP + TILE / 2 });
-  const isAdjacent = (a, b) => {
-    if (a === b) return false;
-    return Math.abs(rowOf(a) - rowOf(b)) <= 1 && Math.abs(colOf(a) - colOf(b)) <= 1;
-  };
-
-  function scoreForWord(word) {
-    // Escalating: each extra letter is worth progressively more, so long words
-    // are the exciting play in a 60-second round. 8+ keeps climbing +5/letter.
-    const n = word.length;
-    if (n < 3) return 0;
-    if (n === 3) return 1;
-    if (n === 4) return 2;
-    if (n === 5) return 4;
-    if (n === 6) return 7;
-    if (n === 7) return 11;
-    return 16 + (n - 8) * 5;
-  }
-
-  // Every valid word traceable on the board. A plain DFS explodes, so we first
-  // shrink the dictionary to words using only the board's letters, build a set
-  // of their prefixes, and prune any DFS path that stops being a live prefix.
-  // On a 4x4 board this runs in a few milliseconds.
-  function findAllBoardWords(letters) {
-    if (!WORDS) return new Set();
-    const tiles = letters.map((l) => l.toLowerCase());
-    const allowed = new Set(tiles.join('').split(''));
-
-    const wordSet = new Set();
-    const prefixSet = new Set();
-    for (const w of WORDS) {
-      let ok = true;
-      for (let i = 0; i < w.length; i++) {
-        if (!allowed.has(w[i])) { ok = false; break; }
-      }
-      if (!ok) continue;
-      wordSet.add(w);
-      for (let i = 1; i <= w.length; i++) prefixSet.add(w.slice(0, i));
-    }
-
-    const results = new Set();
-    const visited = new Array(16).fill(false);
-    function dfs(idx, str) {
-      if (!prefixSet.has(str)) return; // dead prefix — stop
-      if (str.length >= 3 && wordSet.has(str)) results.add(str);
-      for (let n = 0; n < 16; n++) {
-        if (visited[n] || !isAdjacent(idx, n)) continue;
-        visited[n] = true;
-        dfs(n, str + tiles[n]);
-        visited[n] = false;
-      }
-    }
-    for (let i = 0; i < 16; i++) {
-      visited[i] = true;
-      dfs(i, tiles[i]);
-      visited[i] = false;
-    }
-    return results;
+    saveDaily({ day: today, score, words, puzzle, streak: nextStreak(stored) });
   }
 
   // ---------- dictionary ----------
@@ -582,7 +384,7 @@
     $('missed-list').innerHTML = '';
     const boardLetters = state.letters.slice();
     setTimeout(() => {
-      const all = findAllBoardWords(boardLetters);
+      const all = findAllBoardWords(boardLetters, WORDS);
       const missed = [];
       all.forEach((w) => {
         if (!foundSet.has(w)) missed.push({ word: w.toUpperCase(), pts: scoreForWord(w) });
@@ -669,7 +471,7 @@
 
   $('btn-daily').addEventListener('click', () => {
     if (pendingSeed != null) startGame(pendingSeed, 'shared');
-    else startGame(dailyGameSeed(), 'daily');
+    else startGame(dailyGameSeed(WORDS), 'daily');
   });
   $('btn-practice').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
@@ -829,7 +631,7 @@
     // A ?g= link that is today's daily board is treated as the daily itself (so a
     // reload mid-daily, or opening someone's daily link, shows the daily framing),
     // not an "invited" shared game.
-    if (shared != null && shared !== dailyGameSeed()) {
+    if (shared != null && shared !== dailyGameSeed(WORDS)) {
       enterInviteMode(shared);
       renderStreakFooter();
     } else {

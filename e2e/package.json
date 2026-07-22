@@ -1,0 +1,15 @@
+{
+  "name": "lexigo-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Opt-in browser flow tests for Lexigo. Isolated from the root so the game stays zero-dependency. NOT part of the pre-commit gate.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "install-browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}
