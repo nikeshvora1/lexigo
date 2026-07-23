@@ -13,7 +13,7 @@
 
   gtag('config', 'G-Y6S4PYHRHH');
 </script>
-<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
 
@@ -166,11 +166,17 @@
     <!-- SUMMARY SCREEN -->
     <div class="screen hidden" id="screen-summary">
       <div class="summary-hero">
-        <div class="lbl" style="color:#fff;opacity:.85" id="summary-sub">Time's up · Game 000000</div>
+        <div class="summary-hero-top">
+          <div class="lbl" id="summary-sub">Time's up · Game 000000</div>
+          <button class="btn btn-icon summary-home" id="btn-home" aria-label="Back to home" title="Home">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.75 20v-6h4.5v6"/></svg>
+          </button>
+        </div>
         <div class="summary-score-row">
           <span class="summary-score" id="summary-score">0</span>
           <span class="summary-points-lbl">points</span>
         </div>
+        <div class="summary-streak hidden" id="summary-streak">🔥 <b id="summary-streak-val">0</b>&nbsp;day streak</div>
       </div>
       <div class="play-hud">
         <div class="hud-cell">
@@ -238,6 +244,6 @@
 
 <div class="toast hidden" id="toast"></div>
 
-<script type="module" src="app.js?v=19"></script>
+<script type="module" src="app.js?v=20"></script>
 </body>
 </html>

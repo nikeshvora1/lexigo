@@ -221,7 +221,18 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 
 /* — summary — */
 .summary-hero { background: var(--color-accent); color: #fff; padding: 20px 26px 24px; flex: none; }
+.summary-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.summary-hero-top .lbl { color: #fff; opacity: .85; }
+/* Sits on the accent hero, so it borrows white instead of the usual divider. */
+.summary-home { color: #fff; border-color: color-mix(in srgb, #fff 45%, transparent); }
+.summary-home:hover { background: color-mix(in srgb, #fff 16%, transparent); }
+.summary-home:active { background: color-mix(in srgb, #fff 26%, transparent); }
 .summary-score-row { display: flex; align-items: flex-end; gap: 14px; margin-top: 6px; }
+.summary-streak {
+  display: inline-flex; align-items: center; margin-top: 12px;
+  font: 700 12px var(--font-body); letter-spacing: .02em;
+  padding: 5px 10px; border-radius: 999px; background: color-mix(in srgb, #fff 18%, transparent);
+}
 .summary-score { font: 800 92px/.82 var(--font-heading); letter-spacing: -.03em; }
 .summary-points-lbl { font: 800 16px var(--font-heading); padding-bottom: 12px; }
 /* Lower half of the summary: words, Share, Replay distributed through the

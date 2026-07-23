@@ -365,6 +365,11 @@ import {
     }
     const { score, foundList, foundSet } = state;
     $('summary-sub').textContent = `Time's up · ${gameLabel()}`;
+    // The daily is the only mode that feeds the streak, so it's the only one
+    // that gets to show it off. Read it after recordDailyResult so today counts.
+    const streak = state.mode === 'daily' ? activeStreak() : 0;
+    $('summary-streak-val').textContent = String(streak);
+    $('summary-streak').classList.toggle('hidden', streak <= 0);
     $('summary-score').textContent = String(score);
     $('summary-words').textContent = String(foundList.length);
     const best = foundList.reduce((a, b) => {
@@ -588,15 +593,31 @@ import {
   // ---------- summary screen actions ----------
   $('btn-replay').addEventListener('click', () => startGame(randomSeed(), 'practice'));
 
+  // Leave the finished game behind and return to the start screen. The daily
+  // landing is re-rendered so a just-played daily immediately shows as done.
+  function goHome() {
+    if (state) stopTimer();
+    pendingSeed = null;
+    $('invite').classList.add('hidden');
+    history.replaceState(null, '', location.pathname);
+    renderDailyLanding();
+    showScreen('start');
+  }
+  $('btn-home').addEventListener('click', goHome);
+
   function shareMessage() {
     const pts = state.score;
     const words = state.foundList.length;
     const ptLabel = pts === 1 ? 'point' : 'points';
     const wordLabel = words === 1 ? 'word' : 'words';
-    const title = state.mode === 'daily' ? "Today's Lexigo" : 'Lexigo';
+    const daily = state.mode === 'daily';
+    const title = daily ? "Today's Lexigo" : 'Lexigo';
+    const streak = daily ? activeStreak() : 0;
+    const streakLine = streak > 0 ? `🔥 ${streak} day streak\n` : '';
     return `🔤 ${title} — ${pts} ${ptLabel} in 60 seconds\n`
-      + `📝 ${words} ${wordLabel} found\n\n`
-      + `Same board, same 60s — beat me 👇`;
+      + `📝 ${words} ${wordLabel} found\n`
+      + streakLine
+      + `\nSame board, same 60s — beat me 👇`;
   }
 
   $('btn-share').addEventListener('click', async () => {
