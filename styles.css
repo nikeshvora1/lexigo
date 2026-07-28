@@ -127,9 +127,7 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .diff-opt:active { background: color-mix(in srgb, var(--color-text) 16%, transparent); }
 /* The mode you played last, so a repeat visit is one confident tap. */
 .diff-opt.last { background: var(--color-accent-100); border-left-color: var(--color-accent); }
-.diff-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .diff-name { font: 800 17px var(--font-heading); }
-.diff-count { font: 800 11px var(--font-heading); letter-spacing: .08em; text-transform: uppercase; color: var(--color-accent); font-variant-numeric: tabular-nums; }
 .diff-desc { font-size: 12px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
 
 /* daily-done card (once/day lock state) */
