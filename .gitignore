@@ -1,0 +1,5 @@
+# Playwright's opt-in browser tests install here (see TESTING.md). The game
+# itself stays dependency-free — nothing outside e2e/ needs node_modules.
+node_modules/
+test-results/
+playwright-report/

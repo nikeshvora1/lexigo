@@ -26,13 +26,38 @@ test('daily flow: start puts you on a 16-tile board with a timer', async ({ page
   await expect(page.locator('#game-code-tag')).toContainText(/TODAY'S LEXIGO/i);
 });
 
-test('practice flow: new random board, shareable ?g= code in the URL', async ({ page }) => {
+test('practice flow: pick a difficulty, get a curated board with a ?g= code', async ({ page }) => {
   await page.goto('/index.html');
   await waitForReady(page);
   await page.locator('#btn-practice').click();
+  await expect(page.locator('#practice-sheet')).toBeVisible();
+
+  await page.locator('.diff-opt[data-difficulty="hard"]').click();
   await expect(page.locator('#screen-play')).toBeVisible();
   await expect(page.locator('#board .tile')).toHaveCount(16);
+  await expect(page.locator('#game-difficulty-tag')).toContainText('HARD');
   await expect(page).toHaveURL(/\?g=\d{6}/);
+});
+
+test('practice difficulty is remembered and never repeats a board', async ({ page }) => {
+  await page.goto('/index.html');
+  await waitForReady(page);
+  await page.locator('#btn-practice').click();
+  await page.locator('.diff-opt[data-difficulty="medium"]').click();
+  await expect(page.locator('#screen-play')).toBeVisible();
+  const first = new URL(page.url()).searchParams.get('g');
+
+  // "Another board" from the shuffle dialog stays in the chosen difficulty.
+  await page.locator('#btn-shuffle').click();
+  await page.locator('#btn-shuffle-confirm').click();
+  await expect(page.locator('#game-difficulty-tag')).toContainText('MEDIUM');
+  expect(new URL(page.url()).searchParams.get('g')).not.toBe(first);
+
+  // The choice is remembered across visits — the sheet highlights it on return.
+  await page.goto('/index.html');
+  await waitForReady(page);
+  await page.locator('#btn-practice').click();
+  await expect(page.locator('.diff-opt[data-difficulty="medium"]')).toHaveClass(/last/);
 });
 
 test('shared-code flow: entering a 6-digit code opens that board', async ({ page }) => {

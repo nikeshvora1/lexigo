@@ -44,6 +44,26 @@ npm test
 Specs: [`e2e/flows.spec.js`](e2e/flows.spec.js). The Playwright config serves the
 repo root with `python3 -m http.server`, so no extra server code is needed.
 
+## Regenerating the practice seeds
+
+Practice difficulty is served from a curated manifest, [`seeds.js`](seeds.js) —
+500 boards per mode, each recorded with the number of words `findAllBoardWords`
+finds on it. It's generated offline:
+
+```sh
+node scripts/generate-seeds.mjs              # ~20s, rewrites seeds.js
+node scripts/generate-seeds.mjs --scan 80000 # widen the search if a band comes up short
+```
+
+The bands themselves (`DIFFICULTIES`) live in `core.js`; the script only records
+which seeds land in them.
+
+**Anything that changes `DICE`, the vowel bounds, or `words.txt` invalidates the
+manifest** — the recorded counts stop being true and the modes silently
+mislabel their boards. `node --test` re-derives a sample of the manifest against
+live `core.js`, so that drift fails the commit gate instead of shipping. If that
+test fails, re-run the generator.
+
 ## Where new logic should go
 
 Put anything testable and DOM-free in `core.js` and export it; add a case to

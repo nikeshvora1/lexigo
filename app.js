@@ -6,6 +6,7 @@ import {
   generateBoard, tileCenter, isAdjacent,
   scoreForWord, findAllBoardWords,
   streakIfAlive, nextStreak,
+  isDifficulty, pickPracticeSeed,
 } from './core.js';
 
 (() => {
@@ -16,6 +17,39 @@ import {
   // so it can be unit-tested with `node --test`. Only DOM/storage-bound state
   // stays here. These two keys are localStorage-only, so they stay app-local.
   const BEST_SCORE_KEY = 'lexigo:best-score';
+
+  // ---------- practice difficulty ----------
+  const PRACTICE_KEY = 'lexigo:practice'; // { last, played: { easy: [seed…], … } }
+  // Curated boards per difficulty run to 500; remembering every one played would
+  // grow storage without bound across difficulty resets, so we keep a rolling
+  // window big enough that a repeat is a long way off.
+  const PLAYED_MEMORY = 400;
+
+  function loadPractice() {
+    try {
+      const p = JSON.parse(localStorage.getItem(PRACTICE_KEY)) || {};
+      return { last: isDifficulty(p.last) ? p.last : null, played: p.played || {} };
+    } catch (_) {
+      return { last: null, played: {} };
+    }
+  }
+  function savePractice(obj) {
+    try { localStorage.setItem(PRACTICE_KEY, JSON.stringify(obj)); } catch (_) { /* ignore */ }
+  }
+  function playedSeeds(difficulty) {
+    const list = loadPractice().played[difficulty];
+    return Array.isArray(list) ? list : [];
+  }
+  // Record the board we just served so the next pick in this difficulty is a
+  // board they haven't seen. `recycled` means the pool had been exhausted and
+  // pickPracticeSeed started over — drop the old history so it starts clean.
+  function recordPracticePlay(difficulty, seed, recycled) {
+    const p = loadPractice();
+    const prior = recycled ? [] : (Array.isArray(p.played[difficulty]) ? p.played[difficulty] : []);
+    p.last = difficulty;
+    p.played[difficulty] = [...prior.filter((s) => s !== seed), seed].slice(-PLAYED_MEMORY);
+    savePractice(p);
+  }
 
   // ---------- daily puzzle (local date) ----------
   const DAILY_KEY = 'lexigo:daily';
@@ -82,11 +116,13 @@ import {
   // ---------- game state ----------
   let state = null;
 
-  function newState(seed, mode) {
+  function newState(seed, mode, { difficulty = null, boardWords = null } = {}) {
     return {
       seed,
       code: encodeSeed(seed),
       mode, // 'daily' | 'practice' | 'shared'
+      difficulty, // practice only: 'easy' | 'medium' | 'hard'
+      boardWords, // curated boards know their word total up front; null = count it later
       puzzleNumber: mode === 'daily' ? dailyPuzzleNumber() : null,
       letters: generateBoard(seed),
       score: 0,
@@ -99,11 +135,13 @@ import {
     };
   }
 
+  const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
   // How this game is labelled in the play header and summary sub-line.
   function gameLabel() {
-    return state.mode === 'daily'
-      ? "Today's Lexigo"
-      : `Game ${state.code}`;
+    if (state.mode === 'daily') return "Today's Lexigo";
+    if (state.difficulty) return `Game ${state.code} · ${titleCase(state.difficulty)}`;
+    return `Game ${state.code}`;
   }
 
   function bestScore() {
@@ -329,13 +367,15 @@ import {
     return `${location.origin}${location.pathname}?g=${code}`;
   }
 
-  function startGame(seed, mode = 'practice') {
+  function startGame(seed, mode = 'practice', opts = {}) {
     if (state) stopTimer(); // clear a prior game's timer before we replace state
-    state = newState(seed, mode);
+    state = newState(seed, mode, opts);
     history.replaceState(null, '', `?g=${state.code}`);
     $('game-code-tag').textContent = state.mode === 'daily'
       ? "TODAY'S LEXIGO"
       : `GAME ${state.code}`;
+    $('game-difficulty-tag').textContent = state.difficulty ? state.difficulty.toUpperCase() : '';
+    $('game-difficulty-tag').classList.toggle('hidden', !state.difficulty);
     renderBoard();
     updateScoreHud();
     updateTimerHud();
@@ -378,13 +418,22 @@ import {
       return b.word.length > a.word.length ? b : a;
     }, null);
     $('summary-best-word').textContent = best ? best.word : '—';
+    // Replay stays in the difficulty just played, so say which one it'll serve.
+    $('btn-replay').textContent = state.difficulty
+      ? `New ${titleCase(state.difficulty)} board`
+      : 'Practice';
 
     renderChips($('summary-list'), foundList);
     showScreen('summary');
 
     // Missed words: every valid board word the player didn't find, best first.
     // Deferred a tick so the summary paints immediately, then fills in.
-    $('found-label').textContent = `Your words · ${foundList.length}`;
+    // Curated practice boards already know their total, so the "of N" lands
+    // immediately — worth it on hard, where a low raw score reads much better
+    // next to how few words the board held in the first place.
+    $('found-label').textContent = state.boardWords
+      ? `Your words · ${foundList.length} of ${state.boardWords}`
+      : `Your words · ${foundList.length}`;
     $('missed-label').textContent = 'Finding every word…';
     $('missed-list').innerHTML = '';
     const boardLetters = state.letters.slice();
@@ -478,7 +527,53 @@ import {
     if (pendingSeed != null) startGame(pendingSeed, 'shared');
     else startGame(dailyGameSeed(WORDS), 'daily');
   });
-  $('btn-practice').addEventListener('click', () => startGame(randomSeed(), 'practice'));
+  // ---------- practice sheet ----------
+  const practiceSheet = $('practice-sheet');
+
+  function openPracticeSheet() {
+    const { last } = loadPractice();
+    document.querySelectorAll('.diff-opt').forEach((el) => {
+      el.classList.toggle('last', el.dataset.difficulty === last);
+    });
+    practiceSheet.classList.remove('hidden');
+  }
+  function closePracticeSheet() {
+    practiceSheet.classList.add('hidden');
+  }
+
+  // Serve a curated board for the chosen difficulty. If the manifest can't
+  // supply one (unknown difficulty, or seeds.js somehow empty) practice still
+  // starts — it just falls back to an unrated random board, as it did before
+  // difficulties existed.
+  function startPractice(difficulty) {
+    const pick = isDifficulty(difficulty)
+      ? pickPracticeSeed(difficulty, playedSeeds(difficulty))
+      : null;
+    if (!pick) {
+      startGame(randomSeed(), 'practice');
+      return;
+    }
+    recordPracticePlay(difficulty, pick.seed, pick.recycled);
+    startGame(pick.seed, 'practice', { difficulty, boardWords: pick.words });
+  }
+
+  // "Another board" from the summary/shuffle: stay in the difficulty they're
+  // playing, or the last one they chose if there's no game in flight.
+  function startAnotherPractice() {
+    const difficulty = (state && state.difficulty) || loadPractice().last;
+    if (isDifficulty(difficulty)) startPractice(difficulty);
+    else startGame(randomSeed(), 'practice');
+  }
+
+  $('btn-practice').addEventListener('click', openPracticeSheet);
+  $('btn-practice-close').addEventListener('click', closePracticeSheet);
+  practiceSheet.addEventListener('click', (e) => { if (e.target === practiceSheet) closePracticeSheet(); });
+  document.querySelectorAll('.diff-opt').forEach((el) => {
+    el.addEventListener('click', () => {
+      closePracticeSheet();
+      startPractice(el.dataset.difficulty);
+    });
+  });
 
   // ---------- viewport tracking (keyboard-aware sheet positioning) ----------
   // On mobile the on-screen keyboard shrinks the *visual* viewport without
@@ -558,7 +653,9 @@ import {
   $('btn-sheet-close').addEventListener('click', closeSharedSheet);
   sharedSheet.addEventListener('click', (e) => { if (e.target === sharedSheet) closeSharedSheet(); });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !sharedSheet.classList.contains('hidden')) closeSharedSheet();
+    if (e.key !== 'Escape') return;
+    if (!sharedSheet.classList.contains('hidden')) closeSharedSheet();
+    else if (!practiceSheet.classList.contains('hidden')) closePracticeSheet();
   });
   $('btn-play-shared').addEventListener('click', () => {
     const seed = decodeCode(codeValue());
@@ -587,11 +684,11 @@ import {
   });
   $('btn-shuffle-confirm').addEventListener('click', () => {
     shuffleDialog.classList.add('hidden');
-    startGame(randomSeed(), 'practice');
+    startAnotherPractice();
   });
 
   // ---------- summary screen actions ----------
-  $('btn-replay').addEventListener('click', () => startGame(randomSeed(), 'practice'));
+  $('btn-replay').addEventListener('click', startAnotherPractice);
 
   // Leave the finished game behind and return to the start screen. The daily
   // landing is re-rendered so a just-played daily immediately shows as done.
@@ -611,7 +708,9 @@ import {
     const ptLabel = pts === 1 ? 'point' : 'points';
     const wordLabel = words === 1 ? 'word' : 'words';
     const daily = state.mode === 'daily';
-    const title = daily ? "Today's Lexigo" : 'Lexigo';
+    const title = daily
+      ? "Today's Lexigo"
+      : state.difficulty ? `Lexigo ${titleCase(state.difficulty)}` : 'Lexigo';
     const streak = daily ? activeStreak() : 0;
     const streakLine = streak > 0 ? `🔥 ${streak} day streak\n` : '';
     return `🔤 ${title} — ${pts} ${ptLabel} in 60 seconds\n`

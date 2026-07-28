@@ -116,6 +116,22 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 }
 .code-box:focus { outline: none; border-color: var(--color-accent); background: var(--color-bg); }
 
+/* practice difficulty picker */
+.diff-list { display: flex; flex-direction: column; gap: 8px; }
+.diff-opt {
+  display: flex; flex-direction: column; gap: 3px; width: 100%; text-align: left; cursor: pointer;
+  padding: 13px 14px; background: var(--color-surface); border: 2px solid transparent; border-left: 3px solid var(--color-divider);
+  font-family: var(--font-body); color: var(--color-text);
+}
+.diff-opt:hover { background: color-mix(in srgb, var(--color-text) 10%, transparent); border-left-color: var(--color-accent); }
+.diff-opt:active { background: color-mix(in srgb, var(--color-text) 16%, transparent); }
+/* The mode you played last, so a repeat visit is one confident tap. */
+.diff-opt.last { background: var(--color-accent-100); border-left-color: var(--color-accent); }
+.diff-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.diff-name { font: 800 17px var(--font-heading); }
+.diff-count { font: 800 11px var(--font-heading); letter-spacing: .08em; text-transform: uppercase; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.diff-desc { font-size: 12px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
+
 /* daily-done card (once/day lock state) */
 .daily-done { display: flex; flex-direction: column; gap: 5px; padding: 16px; background: var(--color-accent-100); border-left: 3px solid var(--color-accent); }
 .dd-title { font: 800 13px var(--font-heading); letter-spacing: .02em; color: var(--color-accent-800); }
@@ -173,6 +189,7 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .play-header { display: flex; align-items: center; gap: 10px; padding: 16px 22px 12px; border-bottom: 2px solid var(--color-divider); flex: none; }
 .brand { font: 800 20px var(--font-heading); letter-spacing: -.01em; }
 #game-code-tag { margin-left: auto; }
+#game-difficulty-tag { font: 800 10px var(--font-heading); letter-spacing: .1em; }
 .play-hud { display: flex; border-bottom: 2px solid var(--color-divider); flex: none; }
 .hud-cell { flex: 1; padding: 14px 22px; }
 .hud-cell.bordered { border-left: 2px solid var(--color-divider); }

@@ -5,6 +5,8 @@
 // browser and no dependencies. Anything that needs the dictionary takes the
 // word Set as an argument instead of reaching for a module-level global.
 
+import { PRACTICE_SEEDS } from './seeds.js';
+
 // ---------- constants ----------
 export const GAME_SECONDS = 60;
 export const SEED_MAX = 1000000; // 6-digit numeric codes: 000000–999999 (1,000,000 boards)
@@ -118,6 +120,37 @@ export function dailyGameSeed(words, date = new Date()) {
     seed = (seed + 1) % SEED_MAX;
   }
   return seed;
+}
+
+// ---------- practice difficulty ----------
+// A board's difficulty is how many findable words it holds: fewer words means
+// fewer chances to score in 60 seconds. The bands leave deliberate gaps (71-84,
+// 116-134) — adjacent bands would put near-identical boards either side of a
+// boundary and the three modes wouldn't feel distinct. Hard has a floor as well
+// as a ceiling: the tail runs down to ~13 words, which isn't hard, just barren.
+// Sampled over 3,000 seeds, the bands hold roughly 18% / 26% / 27% of boards.
+export const DIFFICULTIES = {
+  easy: { min: 135, max: Infinity },
+  medium: { min: 85, max: 115 },
+  hard: { min: 45, max: 70 },
+};
+
+export const isDifficulty = (name) => Object.prototype.hasOwnProperty.call(DIFFICULTIES, name);
+
+// Pick a curated board for a difficulty, preferring one the player hasn't seen.
+// `played` is the list of seeds already served in this difficulty; once they've
+// all been used the pool resets rather than running dry. Returns
+// { seed, words, recycled } or null if the manifest has nothing for the mode
+// (in which case the caller should fall back to a plain random board).
+export function pickPracticeSeed(difficulty, played = [], rand = Math.random) {
+  const list = PRACTICE_SEEDS[difficulty];
+  if (!list || list.length === 0) return null;
+  const seen = new Set(played);
+  const fresh = list.filter(([seed]) => !seen.has(seed));
+  const recycled = fresh.length === 0;
+  const pool = recycled ? list : fresh;
+  const [seed, words] = pool[Math.floor(rand() * pool.length)];
+  return { seed, words, recycled };
 }
 
 export function msToNextLocalMidnight(now = new Date()) {

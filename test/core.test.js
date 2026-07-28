@@ -16,7 +16,9 @@ import {
   streakIfAlive, nextStreak,
   generateBoard, isVowelTile, isAdjacent, tileCenter,
   scoreForWord, findAllBoardWords,
+  DIFFICULTIES, isDifficulty, pickPracticeSeed,
 } from '../core.js';
+import { PRACTICE_SEEDS } from '../seeds.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // Load the real dictionary once for the integration-flavoured tests.
@@ -190,4 +192,72 @@ test('findAllBoardWords rejects non-adjacent letter placements', () => {
   const board = ['C', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'T', 'Z', 'Z', 'Z', 'A'];
   const found = findAllBoardWords(board, new Set(['cat']));
   assert.ok(!found.has('cat'));
+});
+
+// ---------- practice difficulty ----------
+test('DIFFICULTIES bands are disjoint, with gaps between them', () => {
+  const bands = Object.values(DIFFICULTIES).sort((a, b) => a.min - b.min);
+  for (const b of bands) assert.ok(b.min < b.max, 'a band must span more than nothing');
+  for (let i = 1; i < bands.length; i++) {
+    // Strictly greater, not just non-overlapping: adjacent bands would put
+    // near-identical boards on either side of a boundary.
+    assert.ok(bands[i].min > bands[i - 1].max + 1, 'bands must not touch');
+  }
+});
+
+test('every curated seed is a valid, in-band, unique board', () => {
+  for (const [name, band] of Object.entries(DIFFICULTIES)) {
+    const list = PRACTICE_SEEDS[name];
+    assert.ok(Array.isArray(list) && list.length > 0, `${name} manifest is empty`);
+    const seeds = new Set();
+    for (const [seed, count] of list) {
+      assert.ok(Number.isInteger(seed) && seed >= 0 && seed < SEED_MAX, `${name}: bad seed ${seed}`);
+      assert.ok(!seeds.has(seed), `${name}: duplicate seed ${seed}`);
+      seeds.add(seed);
+      assert.ok(count >= band.min && count <= band.max, `${name}: seed ${seed} claims ${count} words, out of band`);
+    }
+  }
+});
+
+// The manifest is generated offline against core.js + words.txt. If DICE, the
+// vowel bounds or the dictionary ever change, the recorded counts stop being
+// true and the modes silently mislabel their boards. Re-deriving a sample here
+// turns that drift into a failing commit instead. Sampled, not exhaustive:
+// scoring all 1,500 boards takes ~10s, which is too slow for the commit gate.
+test('curated word counts still match what core.js finds (sampled)', () => {
+  const rand = mulberry32(20260728); // fixed sample, so a failure reproduces
+  for (const [name, list] of Object.entries(PRACTICE_SEEDS)) {
+    for (let i = 0; i < 8; i++) {
+      const [seed, count] = list[Math.floor(rand() * list.length)];
+      const actual = findAllBoardWords(generateBoard(seed), WORDS).size;
+      assert.equal(actual, count,
+        `${name}: seed ${seed} was curated as ${count} words but now finds ${actual}. ` +
+        'Regenerate with `node scripts/generate-seeds.mjs`.');
+    }
+  }
+});
+
+test('pickPracticeSeed prefers unplayed boards, then recycles', () => {
+  const easy = PRACTICE_SEEDS.easy.map(([s]) => s);
+  const pick = pickPracticeSeed('easy');
+  assert.ok(easy.includes(pick.seed));
+  assert.equal(pick.recycled, false);
+
+  // With everything but one board played, that board is the only possible pick.
+  const target = easy[7];
+  const played = easy.filter((s) => s !== target);
+  for (let i = 0; i < 20; i++) {
+    assert.deepEqual(pickPracticeSeed('easy', played).seed, target);
+  }
+
+  // Pool exhausted: still returns a board, flagged so the caller can reset.
+  const all = pickPracticeSeed('easy', easy);
+  assert.ok(easy.includes(all.seed));
+  assert.equal(all.recycled, true);
+});
+
+test('pickPracticeSeed returns null for an unknown difficulty', () => {
+  assert.equal(pickPracticeSeed('impossible'), null);
+  assert.equal(isDifficulty('impossible'), false);
+  assert.equal(isDifficulty('hard'), true);
 });

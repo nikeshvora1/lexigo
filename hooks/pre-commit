@@ -6,6 +6,7 @@
 # Syntax-check the browser entry points too, so a typo that node --test wouldn't
 # import still gets caught before it ships.
 node --check core.js || exit 1
+node --check seeds.js || exit 1
 node --input-type=module --check < app.js || exit 1
 
 node --test
