@@ -363,7 +363,8 @@ import {
   }
 
   // ---------- game flow ----------
-  function shareUrl(code) {
+  function shareUrl(code, mode) {
+    if (mode === 'daily') return `${location.origin}${location.pathname}`;
     return `${location.origin}${location.pathname}?g=${code}`;
   }
 
@@ -713,14 +714,15 @@ import {
       : state.difficulty ? `Lexigo ${titleCase(state.difficulty)}` : 'Lexigo';
     const streak = daily ? activeStreak() : 0;
     const streakLine = streak > 0 ? `🔥 ${streak} day streak\n` : '';
+    const cta = daily ? 'Can you beat me? 👇' : 'Same board, same 60s — beat me 👇';
     return `🔤 ${title} — ${pts} ${ptLabel} in 60 seconds\n`
       + `📝 ${words} ${wordLabel} found\n`
       + streakLine
-      + `\nSame board, same 60s — beat me 👇`;
+      + `\n${cta}`;
   }
 
   $('btn-share').addEventListener('click', async () => {
-    const url = shareUrl(state.code);
+    const url = shareUrl(state.code, state.mode);
     const text = shareMessage();
     if (navigator.share) {
       try {
