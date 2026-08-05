@@ -6,7 +6,7 @@ import {
   generateBoard, tileCenter, isAdjacent,
   scoreForWord, findAllBoardWords,
   streakIfAlive, nextStreak,
-  isDifficulty, pickPracticeSeed,
+  isDifficulty, pickPracticeSeed, practiceSeedInfo,
 } from './core.js';
 
 (() => {
@@ -386,6 +386,15 @@ import {
     showScreen('play');
   }
 
+  // A shared code that turns out to be one of the curated boards is framed the
+  // way practice frames it — difficulty tag, and the word total on the summary.
+  // That holds however the code arrived: suggested here, typed in from a
+  // friend, or opened from a ?g= link. Uncurated codes just play as before.
+  function startShared(seed) {
+    const info = practiceSeedInfo(seed);
+    startGame(seed, 'shared', info ? { difficulty: info.difficulty, boardWords: info.words } : {});
+  }
+
   function renderChips(container, items, extraClass) {
     const frag = document.createDocumentFragment();
     items.forEach(({ word, pts }) => {
@@ -519,13 +528,19 @@ import {
     // Arrived via a shared ?g= link: primary CTA becomes that board.
     pendingSeed = seed;
     const code = encodeSeed(seed);
-    $('invite-code').textContent = `GAME ${code}`;
+    // If they were sent a curated board, name the mode in the same tag — the
+    // point of a suggested board is that both players know what they're facing.
+    // A second tag would sit on the invite card's own accent tint and vanish.
+    const info = practiceSeedInfo(seed);
+    $('invite-code').textContent = info
+      ? `GAME ${code} · ${info.difficulty.toUpperCase()}`
+      : `GAME ${code}`;
     $('invite').classList.remove('hidden');
     $('btn-daily').textContent = `Play game ${code}`;
   }
 
   $('btn-daily').addEventListener('click', () => {
-    if (pendingSeed != null) startGame(pendingSeed, 'shared');
+    if (pendingSeed != null) startShared(pendingSeed);
     else startGame(dailyGameSeed(WORDS), 'daily');
   });
   // ---------- practice sheet ----------
@@ -602,7 +617,48 @@ import {
 
   function updatePlayShared() {
     $('btn-play-shared').disabled = codeValue().length !== 6;
+    // A suggestion stays highlighted only while its code is the one in the
+    // boxes — typing over it drops the highlight.
+    const code = codeValue();
+    suggestOpts.forEach((el) => el.classList.toggle('picked', el.dataset.code === code));
   }
+
+  // ---------- suggested boards ----------
+  // Opening this sheet with no code from a friend used to be a dead end. Draw
+  // one curated board per difficulty so there's always a board worth sharing —
+  // the same manifest practice serves from, skipping boards this player has
+  // already been dealt in that mode. Tapping one loads its code into the boxes
+  // rather than launching straight into the game: the code is the thing being
+  // shared, so it should be on screen before the 60 seconds start.
+  const suggestOpts = Array.from(document.querySelectorAll('.suggest-opt'));
+
+  function drawSuggestions() {
+    suggestOpts.forEach((el) => {
+      const difficulty = el.dataset.difficulty;
+      const pick = pickPracticeSeed(difficulty, playedSeeds(difficulty));
+      // No curated boards for that mode (an empty manifest) — drop the row
+      // rather than offer a code that isn't the difficulty it claims to be.
+      el.classList.toggle('hidden', !pick);
+      if (!pick) return;
+      el.dataset.code = encodeSeed(pick.seed);
+      el.querySelector('.suggest-code').textContent = encodeSeed(pick.seed);
+    });
+    $('suggest').classList.toggle('hidden', suggestOpts.every((el) => el.classList.contains('hidden')));
+  }
+
+  function fillCode(code) {
+    codeBoxes.forEach((box, i) => { box.value = code[i] || ''; });
+    $('code-err').textContent = '';
+    updatePlayShared();
+  }
+
+  suggestOpts.forEach((el) => {
+    el.addEventListener('click', () => {
+      fillCode(el.dataset.code || '');
+      $('btn-play-shared').focus({ preventScroll: true });
+    });
+  });
+  $('btn-suggest-redraw').addEventListener('click', drawSuggestions);
   // preventScroll keeps focusing a box from nudging the framed page behind the
   // sheet (an overflow:hidden container can still be scroll-jumped by focus).
   const focusBox = (el) => el.focus({ preventScroll: true });
@@ -610,9 +666,12 @@ import {
   function openSharedSheet() {
     codeBoxes.forEach((b) => { b.value = ''; });
     $('code-err').textContent = '';
+    drawSuggestions();
     updatePlayShared();
     sharedSheet.classList.remove('hidden');
-    focusBox(codeBoxes[0]);
+    // Deliberately not focusing the first box any more: the sheet now offers
+    // suggested boards below the code entry, and on mobile an auto-opened
+    // keyboard would cover them. Tapping a box still opens it as before.
   }
   function closeSharedSheet() {
     sharedSheet.classList.add('hidden');
@@ -665,7 +724,7 @@ import {
       return;
     }
     closeSharedSheet();
-    startGame(seed, 'shared');
+    startShared(seed);
   });
 
   // ---------- play screen actions ----------

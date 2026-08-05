@@ -153,6 +153,21 @@ export function pickPracticeSeed(difficulty, played = [], rand = Math.random) {
   return { seed, words, recycled };
 }
 
+// Look up a curated board by seed → { difficulty, words }, or null (which is
+// almost every seed — only 1,500 of the million are curated). Shared codes are
+// resolved through this, so a board handed over as "hard" is still framed as
+// hard on the receiving side. Built once, on first lookup.
+let seedIndex = null;
+export function practiceSeedInfo(seed) {
+  if (!seedIndex) {
+    seedIndex = new Map();
+    for (const [difficulty, list] of Object.entries(PRACTICE_SEEDS)) {
+      for (const [s, words] of list) seedIndex.set(s, { difficulty, words });
+    }
+  }
+  return seedIndex.get(seed) || null;
+}
+
 export function msToNextLocalMidnight(now = new Date()) {
   const midnight = startOfLocalDay(now);
   midnight.setDate(midnight.getDate() + 1);

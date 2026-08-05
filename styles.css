@@ -103,6 +103,10 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
   width: 100%; display: flex; flex-direction: column; gap: 12px;
   padding: 22px 24px calc(24px + env(safe-area-inset-bottom)); background: var(--color-bg);
   box-shadow: var(--shadow-lg); animation: sheet-up .22s ease;
+  /* Anchored to the bottom, so a sheet taller than the viewport (short phone,
+     or the keyboard shrinking it) would lose its top edge off-screen. Scroll
+     inside it instead. */
+  max-height: 100%; overflow-y: auto;
 }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; }
@@ -115,6 +119,24 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
   background: var(--color-surface); border: 2px solid transparent; border-radius: 0;
 }
 .code-box:focus { outline: none; border-color: var(--color-accent); background: var(--color-bg); }
+
+/* suggested shared boards — one drawn code per difficulty */
+.suggest { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-top: 14px; border-top: 2px solid var(--color-divider); }
+.suggest-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.suggest-head .btn { padding: 2px 6px; margin: -2px -6px 0 0; }
+.suggest-list { display: flex; flex-direction: column; gap: 6px; }
+.suggest-opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; text-align: left; cursor: pointer; padding: 10px 12px;
+  background: var(--color-surface); border: 2px solid transparent; border-left: 3px solid var(--color-divider);
+  font-family: var(--font-body); color: var(--color-text);
+}
+.suggest-opt:hover { background: color-mix(in srgb, var(--color-text) 10%, transparent); border-left-color: var(--color-accent); }
+.suggest-opt:active { background: color-mix(in srgb, var(--color-text) 16%, transparent); }
+/* The suggestion whose code is currently sitting in the boxes. */
+.suggest-opt.picked { background: var(--color-accent-100); border-left-color: var(--color-accent); }
+.suggest-name { font: 800 14px var(--font-heading); }
+.suggest-code { font: 800 16px var(--font-heading); color: var(--color-accent); font-variant-numeric: tabular-nums; }
 
 /* practice difficulty picker */
 .diff-list { display: flex; flex-direction: column; gap: 8px; }
@@ -142,7 +164,7 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .foot-row b { font-weight: 800; }
 
 /* — tags — */
-.tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: .02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * .75); }
+.tag { display: inline-flex; align-items: center; white-space: nowrap; font-size: 11px; letter-spacing: .02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * .75); }
 .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 
@@ -179,7 +201,9 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 
 /* — shared-game invite — */
 .invite { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--color-accent-100); border-left: 3px solid var(--color-accent); }
-.invite-top { display: flex; align-items: center; gap: 10px; }
+/* The code tag carries a difficulty suffix on curated boards, which is tight
+   next to the label on a narrow phone — let it drop to its own line instead. */
+.invite-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
 .invite-copy { margin: 0; font-size: 13px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 72%, transparent); }
 .invite-alt { margin-top: -8px; }
 

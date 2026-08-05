@@ -75,6 +75,36 @@ test('shared-code flow: entering a 6-digit code opens that board', async ({ page
   await expect(page).toHaveURL(/\?g=042042/);
 });
 
+test('shared suggestions: a drawn board fills the code and plays labelled', async ({ page }) => {
+  await page.goto('/index.html');
+  await waitForReady(page);
+  await page.locator('#btn-shared-open').click();
+
+  const hard = page.locator('.suggest-opt[data-difficulty="hard"]');
+  await expect(hard.locator('.suggest-code')).toHaveText(/^\d{6}$/);
+
+  // Redraw deals different boards (500 per mode — one row could repeat by
+  // chance, so compare all three).
+  const codes = () => page.locator('.suggest-code').allTextContents();
+  const before = await codes();
+  await page.locator('#btn-suggest-redraw').click();
+  expect(await codes()).not.toEqual(before);
+
+  // Tapping a suggestion loads its code rather than launching the game.
+  const picked = await hard.locator('.suggest-code').textContent();
+  await hard.click();
+  await expect(page.locator('#screen-play')).toBeHidden();
+  const boxes = page.locator('#code-boxes .code-box');
+  for (const [i, d] of [...picked].entries()) await expect(boxes.nth(i)).toHaveValue(d);
+  await expect(hard).toHaveClass(/picked/);
+
+  await page.locator('#btn-play-shared').click();
+  await expect(page.locator('#screen-play')).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`\\?g=${picked}`));
+  // A curated code carries its difficulty into the game, however it arrived.
+  await expect(page.locator('#game-difficulty-tag')).toContainText('HARD');
+});
+
 test('invite flow: a ?g= link lands on the start screen framed as that game', async ({ page }) => {
   await page.goto('/index.html?g=042042');
   await waitForReady(page);

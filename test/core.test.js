@@ -16,7 +16,7 @@ import {
   streakIfAlive, nextStreak,
   generateBoard, isVowelTile, isAdjacent, tileCenter,
   scoreForWord, findAllBoardWords,
-  DIFFICULTIES, isDifficulty, pickPracticeSeed,
+  DIFFICULTIES, isDifficulty, pickPracticeSeed, practiceSeedInfo,
 } from '../core.js';
 import { PRACTICE_SEEDS } from '../seeds.js';
 
@@ -254,6 +254,23 @@ test('pickPracticeSeed prefers unplayed boards, then recycles', () => {
   const all = pickPracticeSeed('easy', easy);
   assert.ok(easy.includes(all.seed));
   assert.equal(all.recycled, true);
+});
+
+// Shared codes are looked up here, so a suggested board keeps its difficulty
+// (and its word total) on whichever device the code is entered on.
+test('practiceSeedInfo resolves a curated seed, ignores everything else', () => {
+  for (const [name, list] of Object.entries(PRACTICE_SEEDS)) {
+    const [seed, words] = list[0];
+    assert.deepEqual(practiceSeedInfo(seed), { difficulty: name, words });
+  }
+  const curated = new Set(Object.values(PRACTICE_SEEDS).flat().map(([s]) => s));
+  let uncurated = 0;
+  for (let seed = 0; uncurated < 5 && seed < 1000; seed++) {
+    if (curated.has(seed)) continue;
+    assert.equal(practiceSeedInfo(seed), null);
+    uncurated++;
+  }
+  assert.equal(uncurated, 5);
 });
 
 test('pickPracticeSeed returns null for an unknown difficulty', () => {

@@ -13,7 +13,7 @@
 
   gtag('config', 'G-Y6S4PYHRHH');
 </script>
-<link rel="stylesheet" href="styles.css?v=22">
+<link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body>
 
@@ -237,6 +237,27 @@
         </div>
         <div class="field-err" id="code-err"></div>
         <button class="btn btn-primary btn-block" id="btn-play-shared" style="justify-content:center;padding:16px;font-size:16px" disabled>Play this board</button>
+
+        <div class="suggest" id="suggest">
+          <div class="suggest-head">
+            <span class="lbl">No code? Take one of these</span>
+            <button class="btn btn-ghost" id="btn-suggest-redraw">Redraw</button>
+          </div>
+          <div class="suggest-list">
+            <button class="suggest-opt" data-difficulty="easy">
+              <span class="suggest-name">Easy</span>
+              <span class="suggest-code mono">000000</span>
+            </button>
+            <button class="suggest-opt" data-difficulty="medium">
+              <span class="suggest-name">Medium</span>
+              <span class="suggest-code mono">000000</span>
+            </button>
+            <button class="suggest-opt" data-difficulty="hard">
+              <span class="suggest-name">Hard</span>
+              <span class="suggest-code mono">000000</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -271,6 +292,6 @@
 
 <div class="toast hidden" id="toast"></div>
 
-<script type="module" src="app.js?v=21"></script>
+<script type="module" src="app.js?v=23"></script>
 </body>
 </html>
