@@ -158,6 +158,18 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .dd-score { font: 800 17px var(--font-heading); color: var(--color-text); }
 .dd-next { font-size: 12px; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin-top: 2px; }
 .dd-next b { font-family: var(--font-heading); color: var(--color-accent); font-variant-numeric: tabular-nums; }
+/* Shares the title's row rather than taking one of its own: the start screen
+   already overflows in this state, and a stacked button pushed the Practice /
+   Shared game CTAs further under the fold. Negative margins keep the button
+   from making the row taller than the title alone. */
+.dd-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dd-share {
+  flex: none; gap: 5px; margin: -5px -3px; padding: 5px 9px;
+  font-size: 12px; color: var(--color-accent-800);
+  background: var(--color-bg); border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+.dd-share:hover { background: #fff; border-color: var(--color-accent); }
+.dd-share:active { background: var(--color-accent-100); }
 
 /* start-screen footer: streak + best */
 .foot-row { display: flex; justify-content: space-between; gap: 12px; font: 800 12px var(--font-heading); letter-spacing: .04em; }

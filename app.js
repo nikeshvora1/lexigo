@@ -12,7 +12,7 @@ import {
 // get a fresh app.js against a 10-minute-stale core.js — which at best reads
 // an old constant and at worst fails to link a newly added export, breaking
 // the whole app until the cache expires.
-} from './core.js?v=25';
+} from './core.js?v=28';
 
 (() => {
   'use strict';
@@ -794,27 +794,51 @@ import {
   }
   $('btn-home').addEventListener('click', goHome);
 
-  function shareMessage() {
-    const pts = state.score;
-    const words = state.foundList.length;
-    const ptLabel = pts === 1 ? 'point' : 'points';
+  // ---------- sharing ----------
+  // A daily invites the reader to the same puzzle number; any other board
+  // invites them to that exact board, which the link carries.
+  const DAILY_CTA = 'Can you beat me? 👇';
+  const BOARD_CTA = 'Same board, same 60s — beat me 👇';
+
+  function composeShare({ title, score, words, streak, cta }) {
+    const ptLabel = score === 1 ? 'point' : 'points';
     const wordLabel = words === 1 ? 'word' : 'words';
-    const daily = state.mode === 'daily';
-    const title = daily
-      ? dailyName()
-      : state.difficulty ? `Lexigo ${titleCase(state.difficulty)}` : 'Lexigo';
-    const streak = daily ? activeStreak() : 0;
     const streakLine = streak > 0 ? `🔥 ${streak} day streak\n` : '';
-    const cta = daily ? 'Can you beat me? 👇' : 'Same board, same 60s — beat me 👇';
-    return `🔤 ${title} — ${pts} ${ptLabel} in 60 seconds\n`
+    return `🔤 ${title} — ${score} ${ptLabel} in 60 seconds\n`
       + `📝 ${words} ${wordLabel} found\n`
       + streakLine
       + `\n${cta}`;
   }
 
-  $('btn-share').addEventListener('click', async () => {
-    const url = shareUrl(state.code, state.mode);
-    const text = shareMessage();
+  // From the game just finished.
+  function shareMessage() {
+    const daily = state.mode === 'daily';
+    return composeShare({
+      title: daily ? dailyName() : state.difficulty ? `Lexigo ${titleCase(state.difficulty)}` : 'Lexigo',
+      score: state.score,
+      words: state.foundList.length,
+      streak: daily ? activeStreak() : 0,
+      cta: daily ? DAILY_CTA : BOARD_CTA,
+    });
+  }
+
+  // From the stored record instead, for the done card on the start screen —
+  // the player may have arrived on a fresh load with no game in memory, hours
+  // after playing. Numbered off today's date for the same reason the card is:
+  // a record written before numbering landed carries the old epoch's number.
+  function dailyShareMessage() {
+    const d = loadDaily();
+    if (!d) return null;
+    return composeShare({
+      title: dailyName(dailyPuzzleNumber()),
+      score: d.score,
+      words: d.words,
+      streak: activeStreak(),
+      cta: DAILY_CTA,
+    });
+  }
+
+  async function shareResult(text, url) {
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Lexigo', text, url });
@@ -827,6 +851,14 @@ import {
     } catch (_) {
       showToast('Could not copy result');
     }
+  }
+
+  $('btn-share').addEventListener('click', () => {
+    shareResult(shareMessage(), shareUrl(state.code, state.mode));
+  });
+  $('btn-share-daily').addEventListener('click', () => {
+    const text = dailyShareMessage();
+    if (text) shareResult(text, shareUrl(null, 'daily'));
   });
 
   // ---------- boot ----------

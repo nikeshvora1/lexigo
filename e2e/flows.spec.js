@@ -61,6 +61,36 @@ test('practice difficulty is remembered and never repeats a board', async ({ pag
   await expect(page.locator('.diff-opt[data-difficulty="medium"]')).toHaveClass(/last/);
 });
 
+test('the done card can share the result on a fresh load, with no game in memory', async ({ page }) => {
+  await page.goto('/index.html');
+  await waitForReady(page);
+  // A daily already recorded today, as if played hours ago in another session.
+  await page.evaluate(() => {
+    const d = new Date();
+    localStorage.setItem('lexigo:daily', JSON.stringify({
+      day: `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`,
+      score: 53, words: 19, puzzle: 7, streak: 6,
+    }));
+  });
+  await page.reload();
+  await waitForReady(page);
+
+  await expect(page.locator('#daily-done')).toBeVisible();
+  await expect(page.locator('#daily-done-score')).toHaveText('You scored 53 · 19 words');
+
+  // The message is built from the stored record, not from a live game.
+  await page.evaluate(() => {
+    window.__shared = null;
+    navigator.share = (d) => { window.__shared = d; return Promise.resolve(); };
+  });
+  await page.locator('#btn-share-daily').click();
+  const shared = await page.evaluate(() => window.__shared);
+  expect(shared.text).toMatch(/^🔤 Lexigo #\d+ — 53 points in 60 seconds/);
+  expect(shared.text).toContain('📝 19 words found');
+  expect(shared.text).toContain('🔥 6 day streak');
+  expect(shared.url).not.toContain('?g='); // the daily link is the bare page
+});
+
 test('the wordmark leaves the game, but only after confirming', async ({ page }) => {
   await page.goto('/index.html');
   await waitForReady(page);
