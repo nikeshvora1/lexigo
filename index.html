@@ -13,7 +13,7 @@
 
   gtag('config', 'G-Y6S4PYHRHH');
 </script>
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="styles.css?v=26">
 </head>
 <body>
 
@@ -120,7 +120,7 @@
     <!-- PLAY SCREEN -->
     <div class="screen hidden" id="screen-play">
       <div class="play-header">
-        <span class="brand">LEXIGO</span>
+        <button class="brand brand-home" id="btn-brand-home" aria-label="Leave this game and go home" title="Home">LEXIGO</button>
         <span class="tag tag-neutral mono" id="game-code-tag">GAME 000000</span>
         <span class="tag tag-accent hidden" id="game-difficulty-tag">HARD</span>
       </div>
@@ -202,6 +202,17 @@
             <span id="share-label">Share result</span>
           </button>
           <button class="btn btn-secondary btn-block summary-cta" id="btn-replay">Practice</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop hidden" id="leave-dialog">
+      <div class="dialog">
+        <div class="dialog-title">Leave this game?</div>
+        <div class="dialog-body">Going home ends this round — your score, timer and found words will be lost. The clock is paused until you choose.</div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" id="btn-leave-cancel">Keep playing</button>
+          <button class="btn btn-primary" id="btn-leave-confirm">Leave game</button>
         </div>
       </div>
     </div>
@@ -292,6 +303,6 @@
 
 <div class="toast hidden" id="toast"></div>
 
-<script type="module" src="app.js?v=24"></script>
+<script type="module" src="app.js?v=25"></script>
 </body>
 </html>

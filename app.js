@@ -12,7 +12,7 @@ import {
 // get a fresh app.js against a 10-minute-stale core.js — which at best reads
 // an old constant and at worst fails to link a newly added export, breaking
 // the whole app until the cache expires.
-} from './core.js?v=24';
+} from './core.js?v=25';
 
 (() => {
   'use strict';
@@ -728,6 +728,10 @@ import {
     if (e.key !== 'Escape') return;
     if (!sharedSheet.classList.contains('hidden')) closeSharedSheet();
     else if (!practiceSheet.classList.contains('hidden')) closePracticeSheet();
+    // Escape out of a play-screen dialog is the cautious answer: stay in the
+    // game, clock resumed, same as pressing the cancel button.
+    else if (!leaveDialog.classList.contains('hidden')) dismissPlayDialog(leaveDialog);
+    else if (!shuffleDialog.classList.contains('hidden')) dismissPlayDialog(shuffleDialog);
   });
   $('btn-play-shared').addEventListener('click', () => {
     const seed = decodeCode(codeValue());
@@ -743,20 +747,36 @@ import {
   $('btn-pause').addEventListener('click', () => setPaused(!state.paused));
   $('btn-resume').addEventListener('click', () => setPaused(false));
 
-  const shuffleDialog = $('shuffle-dialog');
+  // Both play-screen dialogs hold the clock while they're open and hand the
+  // time back if the player backs out — deciding shouldn't cost seconds.
   let wasPausedBeforeDialog = false;
-  $('btn-shuffle').addEventListener('click', () => {
+  function openPlayDialog(dialog) {
     wasPausedBeforeDialog = state.paused;
     stopTimer();
-    shuffleDialog.classList.remove('hidden');
-  });
-  $('btn-shuffle-cancel').addEventListener('click', () => {
-    shuffleDialog.classList.add('hidden');
+    dialog.classList.remove('hidden');
+  }
+  function dismissPlayDialog(dialog) {
+    dialog.classList.add('hidden');
     if (!wasPausedBeforeDialog) startTimer();
-  });
+  }
+
+  const shuffleDialog = $('shuffle-dialog');
+  $('btn-shuffle').addEventListener('click', () => openPlayDialog(shuffleDialog));
+  $('btn-shuffle-cancel').addEventListener('click', () => dismissPlayDialog(shuffleDialog));
   $('btn-shuffle-confirm').addEventListener('click', () => {
     shuffleDialog.classList.add('hidden');
     startAnotherPractice();
+  });
+
+  // The wordmark doubles as the way home mid-game, so it asks first: a mis-tap
+  // on the header shouldn't cost a round. Both answers are ways out — "Leave
+  // game" goes home, "Keep playing" returns to the board with the clock intact.
+  const leaveDialog = $('leave-dialog');
+  $('btn-brand-home').addEventListener('click', () => openPlayDialog(leaveDialog));
+  $('btn-leave-cancel').addEventListener('click', () => dismissPlayDialog(leaveDialog));
+  $('btn-leave-confirm').addEventListener('click', () => {
+    leaveDialog.classList.add('hidden');
+    goHome();
   });
 
   // ---------- summary screen actions ----------

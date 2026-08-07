@@ -208,8 +208,16 @@ h1 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); 
 .invite-alt { margin-top: -8px; }
 
 /* — play header / hud — */
-.play-header { display: flex; align-items: center; gap: 10px; padding: 16px 22px 12px; border-bottom: 2px solid var(--color-divider); flex: none; }
+/* Above the pause overlay (z-index 5): pausing is exactly when someone wants
+   to leave, so the wordmark has to stay reachable. The overlay still covers
+   the board, which is the part that must be hidden while paused. */
+.play-header { position: relative; z-index: 6; display: flex; align-items: center; gap: 10px; padding: 16px 22px 12px; border-bottom: 2px solid var(--color-divider); flex: none; background: var(--color-bg); }
 .brand { font: 800 20px var(--font-heading); letter-spacing: -.01em; }
+/* The brand is the way out of a game in progress. Strip the button chrome so
+   it still reads as the wordmark, not a control. */
+.brand-home { padding: 0; background: none; border: 0; color: inherit; cursor: pointer; }
+.brand-home:hover { color: var(--color-accent); }
+.brand-home:active { color: var(--color-accent-700); }
 #game-code-tag { margin-left: auto; }
 #game-difficulty-tag { font: 800 10px var(--font-heading); letter-spacing: .1em; }
 .play-hud { display: flex; border-bottom: 2px solid var(--color-divider); flex: none; }

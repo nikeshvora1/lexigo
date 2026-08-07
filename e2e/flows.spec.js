@@ -61,6 +61,30 @@ test('practice difficulty is remembered and never repeats a board', async ({ pag
   await expect(page.locator('.diff-opt[data-difficulty="medium"]')).toHaveClass(/last/);
 });
 
+test('the wordmark leaves the game, but only after confirming', async ({ page }) => {
+  await page.goto('/index.html');
+  await waitForReady(page);
+  await page.locator('#btn-daily').click();
+  await expect(page.locator('#screen-play')).toBeVisible();
+
+  // Confirming is required — a mis-tap on the header can't cost a round.
+  await page.locator('#btn-brand-home').click();
+  await expect(page.locator('#leave-dialog')).toBeVisible();
+  await page.locator('#btn-leave-cancel').click();
+  await expect(page.locator('#leave-dialog')).toBeHidden();
+  await expect(page.locator('#screen-play')).toBeVisible();
+
+  // Paused is exactly when someone wants out, so the wordmark must still work
+  // with the pause overlay up.
+  await page.locator('#btn-pause').click();
+  await page.locator('#btn-brand-home').click();
+  await expect(page.locator('#leave-dialog')).toBeVisible();
+
+  await page.locator('#btn-leave-confirm').click();
+  await expect(page.locator('#screen-start')).toBeVisible();
+  await expect(page).not.toHaveURL(/\?g=/);
+});
+
 test('shared-code flow: entering a 6-digit code opens that board', async ({ page }) => {
   await page.goto('/index.html');
   await waitForReady(page);
