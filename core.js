@@ -13,8 +13,8 @@ export const SEED_MAX = 1000000; // 6-digit numeric codes: 000000–999999 (1,00
 export const MIN_VOWELS = 4; // guaranteed vowels per board
 export const MAX_VOWELS = 8; // avoid vowel-flooded, low-scoring boards too
 export const DAILY_MIN_WORDS = 100; // the daily board should feel full; practice/shared boards aren't held to this
-// Daily puzzle #1 is 2026-07-21 in the player's LOCAL time (month is 0-indexed).
-export const DAILY_EPOCH = new Date(2026, 6, 21);
+// Daily puzzle #1 is 2026-08-01 in the player's LOCAL time (month is 0-indexed).
+export const DAILY_EPOCH = new Date(2026, 7, 1);
 
 // 4x4 word-dice (16 six-sided dice). Single-letter faces only — the classic
 // "Qu" face is replaced with R so no tile ever shows two letters.
@@ -87,9 +87,14 @@ export function previousDayKey(date = new Date()) {
   return dayKey(d);
 }
 
+// The number is shared, so it has to mean the same board everywhere. It counts
+// LOCAL days, exactly as the seed does — two players on their own local Aug 7
+// get puzzle #7 and the same board, even though their Aug 7 starts at different
+// instants. Clamped at 1: a device whose clock predates the epoch would
+// otherwise show a zero or negative puzzle number.
 export function dailyPuzzleNumber(date = new Date()) {
   const days = Math.round((startOfLocalDay(date) - DAILY_EPOCH) / 86400000);
-  return days + 1; // epoch day is #1
+  return Math.max(1, days + 1); // epoch day is #1
 }
 
 // Deterministic seed from the local date, well-mixed so consecutive days are

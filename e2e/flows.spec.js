@@ -23,7 +23,8 @@ test('daily flow: start puts you on a 16-tile board with a timer', async ({ page
   await page.locator('#btn-daily').click();
   await expect(page.locator('#screen-play')).toBeVisible();
   await expect(page.locator('#board .tile')).toHaveCount(16);
-  await expect(page.locator('#game-code-tag')).toContainText(/TODAY'S LEXIGO/i);
+  // The daily is named by its number, which reads the same in every timezone.
+  await expect(page.locator('#game-code-tag')).toContainText(/^LEXIGO #\d+$/);
 });
 
 test('practice flow: pick a difficulty, get a curated board with a ?g= code', async ({ page }) => {

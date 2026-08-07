@@ -118,7 +118,22 @@ test('dayKey and previousDayKey handle month boundaries', () => {
 
 test('dailyPuzzleNumber counts from the epoch (day 1)', () => {
   assert.equal(dailyPuzzleNumber(DAILY_EPOCH), 1);
-  assert.equal(dailyPuzzleNumber(new Date(2026, 6, 22)), 2);
+  assert.equal(dailyPuzzleNumber(new Date(2026, 7, 2)), 2);
+  assert.equal(dailyPuzzleNumber(new Date(2026, 7, 31)), 31); // spans a month end
+  assert.equal(dailyPuzzleNumber(new Date(2026, 8, 1)), 32);
+  // The number is shared, so it must agree with the board: same local calendar
+  // day → same puzzle number AND same seed, whatever the clock time.
+  const morning = new Date(2026, 7, 7, 0, 30);
+  const night = new Date(2026, 7, 7, 23, 45);
+  assert.equal(dailyPuzzleNumber(morning), dailyPuzzleNumber(night));
+  assert.equal(dailySeed(morning), dailySeed(night));
+  assert.notEqual(dailyPuzzleNumber(night), dailyPuzzleNumber(new Date(2026, 7, 8)));
+});
+
+test('dailyPuzzleNumber never goes below 1', () => {
+  // A device whose clock predates the epoch would otherwise render "#0"/"#-4".
+  assert.equal(dailyPuzzleNumber(new Date(2026, 6, 31)), 1);
+  assert.equal(dailyPuzzleNumber(new Date(2020, 0, 1)), 1);
 });
 
 test('dailySeed is deterministic per date and spreads across days', () => {

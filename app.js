@@ -7,7 +7,12 @@ import {
   scoreForWord, findAllBoardWords,
   streakIfAlive, nextStreak,
   isDifficulty, pickPracticeSeed, practiceSeedInfo,
-} from './core.js';
+// Versioned like the <script> tag in index.html, and bumped with it. Pages
+// serves everything with max-age=600, so without this a returning player can
+// get a fresh app.js against a 10-minute-stale core.js — which at best reads
+// an old constant and at worst fails to link a newly added export, breaking
+// the whole app until the cache expires.
+} from './core.js?v=24';
 
 (() => {
   'use strict';
@@ -137,9 +142,13 @@ import {
 
   const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+  // The daily's public name. Players compare results across timezones, where
+  // "today" is ambiguous but the number isn't — #7 is one board, worldwide.
+  const dailyName = (n = state.puzzleNumber) => `Lexigo #${n}`;
+
   // How this game is labelled in the play header and summary sub-line.
   function gameLabel() {
-    if (state.mode === 'daily') return "Today's Lexigo";
+    if (state.mode === 'daily') return dailyName();
     if (state.difficulty) return `Game ${state.code} · ${titleCase(state.difficulty)}`;
     return `Game ${state.code}`;
   }
@@ -373,7 +382,7 @@ import {
     state = newState(seed, mode, opts);
     history.replaceState(null, '', `?g=${state.code}`);
     $('game-code-tag').textContent = state.mode === 'daily'
-      ? "TODAY'S LEXIGO"
+      ? dailyName().toUpperCase()
       : `GAME ${state.code}`;
     $('game-difficulty-tag').textContent = state.difficulty ? state.difficulty.toUpperCase() : '';
     $('game-difficulty-tag').classList.toggle('hidden', !state.difficulty);
@@ -503,7 +512,10 @@ import {
 
     if (done) {
       const d = loadDaily();
-      $('daily-done-title').textContent = "Today's Lexigo — done";
+      // Numbered off today's date, not the stored record: the card only ever
+      // shows today's result, and a record written before the numbering landed
+      // carries a number from the old epoch.
+      $('daily-done-title').textContent = `${dailyName(dailyPuzzleNumber())} — done`;
       $('daily-done-score').textContent =
         `You scored ${d.score} · ${d.words} ${d.words === 1 ? 'word' : 'words'}`;
       startCountdown();
@@ -769,7 +781,7 @@ import {
     const wordLabel = words === 1 ? 'word' : 'words';
     const daily = state.mode === 'daily';
     const title = daily
-      ? "Today's Lexigo"
+      ? dailyName()
       : state.difficulty ? `Lexigo ${titleCase(state.difficulty)}` : 'Lexigo';
     const streak = daily ? activeStreak() : 0;
     const streakLine = streak > 0 ? `🔥 ${streak} day streak\n` : '';
